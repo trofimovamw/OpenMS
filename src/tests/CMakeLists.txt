@@ -49,7 +49,7 @@ if("${PACKAGE_TYPE}" STREQUAL "none")
     ## configure the regular class ..
     if(ENABLE_CLASS_TESTING)
       add_subdirectory(class_tests)
-    endif()  
+    endif()
     # TOPP Test project ..
     if(ENABLE_TOPP_TESTING)
       add_subdirectory(topp)

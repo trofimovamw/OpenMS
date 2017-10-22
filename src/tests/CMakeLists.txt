@@ -43,20 +43,20 @@ option(ENABLE_PIPELINE_TESTING "Enables the additional testing of various TOPPAS
 #------------------------------------------------------------------------------
 # we only test if we have no package target
 if("${PACKAGE_TYPE}" STREQUAL "none")
-  #   if(ENABLE_STYLE_TESTING)
-  #     add_subdirectory(coding)
-  #   else()
-  #     ## configure the regular class ..
-  #     if(ENABLE_CLASS_TESTING)
-  #       add_subdirectory(class_tests)
-  #     endif()  
-  #     # TOPP Test project ..
-  #     if(ENABLE_TOPP_TESTING)
-  #       add_subdirectory(topp)
-  #     endif()
-  #     # and if requested also TOPPAS pipeline tests
-  #     if(ENABLE_PIPELINE_TESTING)
-  #       add_subdirectory(toppas)
-  #     endif()
-  #   endif(ENABLE_STYLE_TESTING)
+  if(ENABLE_STYLE_TESTING)
+    add_subdirectory(coding)
+  else()
+    ## configure the regular class ..
+    if(ENABLE_CLASS_TESTING)
+      add_subdirectory(class_tests)
+    endif()  
+    # TOPP Test project ..
+    if(ENABLE_TOPP_TESTING)
+      add_subdirectory(topp)
+    endif()
+    # and if requested also TOPPAS pipeline tests
+    if(ENABLE_PIPELINE_TESTING)
+      add_subdirectory(toppas)
+    endif()
+  endif(ENABLE_STYLE_TESTING)
 endif("${PACKAGE_TYPE}" STREQUAL "none")

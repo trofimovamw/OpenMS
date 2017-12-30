@@ -15,6 +15,16 @@ function build_contrib {
   fi
 }
 
+ls /usr/lib/ccache
+
+if [ "${CC}" == "clang" ]; then
+# Use ccache also for clang and clang++ on linux
+sudo ln -s ../../bin/ccache /usr/lib/ccache/clang
+export CFLAGS="-Qunused-arguments"
+sudo ln -s ../../bin/ccache /usr/lib/ccache/clang++
+export CXXFLAGS="-Qunused-arguments"
+fi
+
 if [ "${PYOPENMS}" = "ON" ]; then
   # Note: ensure that cmake uses the same python!
   pyenv versions

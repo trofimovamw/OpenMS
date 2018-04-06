@@ -28,40 +28,104 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Timo Sachsenberg$
-// $Authors: Stephan Aiche, Marc Sturm $
+// $Maintainer: Dragan Haberland, Leo Wurthilini, Mohammad El-Ali$
+// $Authors: Dragan Haberland, Leo Wurthilini, Mohammad El-Ali $
 // --------------------------------------------------------------------------
 #include <vector>
 #include <OpenMS/FORMAT/MzTabFile.h>
 #include <OpenMS/FORMAT/MzTab.h>
+
+#include <regex>
+
 
 using namespace std;
 using namespace OpenMS;
 
     class OPENMS_DLLAPI Metriken
     {
-    const vector<FeatureMap> FeatureMaps;
-    const vector<vector<PeptideIdentification>> Peptides;
-    const vector<vector<ProteinIdentification>> Proteins;
-    
+    //das sind die eingelesenen Daten, sie können von den Metriken gelesen aber nicht umgeschrieben werden//
+    const vector<FeatureMap> FeatureMaps;			//Alle FeatureXML Datein
+    const vector<vector<PeptideIdentification>> PeptidesId;	//Peptide der IDXML's
+    const vector<vector<ProteinIdentification>> ProteinsId;	//Proteine der IDXML's
+    const vector<CsvFile> CsvFiles;   				//Alle CSV Datein
+ 
     public:
-        Metriken(const vector<FeatureMap> FM, const vector<vector<PeptideIdentification>> PeI, const vector<vector<ProteinIdentification>> PrI):
+        Metriken(const vector<FeatureMap> FM, const vector<vector<PeptideIdentification>> PeI, const vector<vector<ProteinIdentification>> PrI,const vector<CsvFile> CF):
         FeatureMaps(FM),
-        Peptides(PeI),
-        Proteins(PrI)
+        PeptidesId(PeI),
+        ProteinsId(PrI),
+        CsvFiles(CF)
         {
         }
-        int bigg(){return FeatureMaps.size()+Peptides.size()+Proteins.size();};
-        int runAllMetrics();
+        void runAllMetrics();
     protected:
-        int metricone_();       
-   };
-    int Metriken::metricone_(){
-        return 1;
+        int ProteinAndPeptideCount_(vector<vector<Size>>&,vector<StringList>&) const;
+	//->Hier Metriken deklarieren<-//       
+	};
+
+
+
+    	//->Hier die Metriken definieren<-//
+
+
+    int Metriken::ProteinAndPeptideCount_(vector<vector<Size>>& Results,vector<StringList>& MetaData) const{
+        typedef vector<Size> VSize;
+        for(vector<CsvFile>::const_iterator it = CsvFiles.begin(); it!=CsvFiles.end();it++){
+            StringList MetaList;
+            VSize Abundances;
+            VSize AbundancesPosition;
+            bool headfinder = false;
+            CsvFile fl = *it;
+            Size line = 0;
+            StringList CurrentRow;
+            Size maxRow = fl.rowCount();
+            while(fl.getRow(line,CurrentRow)==false){
+                MetaList.push_back(CurrentRow[0]);
+                line++;
+            }
+            cout<<line<<" <- line"<<endl;
+            while(line<maxRow){
+                fl.getRow(line,CurrentRow);
+                if((CurrentRow[0]=="\"peptide\"")||(CurrentRow[0]=="\"protein\"")){
+                    regex e("(abundance_)[0-9]+");
+                    MetaData.push_back(MetaList);
+                    for(int k = 2;k<CurrentRow.size();k++){
+                        smatch m;
+                        regex_search(CurrentRow[k],m,e);
+                        if(m.size()>0){
+                            AbundancesPosition.push_back(k);
+                            headfinder = true;
+                        }
+                    }
+                    Abundances.resize(AbundancesPosition.size(),0);
+                }
+                else if(headfinder){
+                    for(int q = 0;q<Abundances.size();q++){
+                        Abundances[q]+= stoi(CurrentRow[AbundancesPosition[q]]);
+                    }
+                }
+                line++;
+            }
+            cout<<Abundances[0]<<" <- Abundances[0]"<<endl;
+            cout<<Abundances[1]<<" <- Abundances[1]"<<endl;
+            cout<<Abundances[2]<<" <- Abundances[2]"<<endl;
+            headfinder==true ? Results.push_back(Abundances): Abundances.clear();
+        }        
+        return Results.size()>0?1:0;
     }
+
+
+
     
-    int Metriken::runAllMetrics(){
-        return 1;
+    void Metriken::runAllMetrics(){
+        ////////////////Metrik1: Protein And Peptide Count /////////////////////////////////
+        vector<vector<Size>> ProteinAndPeptideCount;
+        vector<StringList> ProteinAndPeptideCountMetaData;
+        int a = this->ProteinAndPeptideCount_(ProteinAndPeptideCount,ProteinAndPeptideCountMetaData);
+	////////////////Metrik2: ....................../////////////////////////////////////
+
+
+
     }
    
 

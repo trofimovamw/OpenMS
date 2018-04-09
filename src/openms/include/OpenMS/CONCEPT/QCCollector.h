@@ -43,6 +43,7 @@
     //der Plan für MetricMap ist eine Art Tabelle. Wenn ihr Daten hinein pusht dann wird die Überschrift der Tabellenspalte und die Daten
     //    der ganzen Spalte erwartet. In einer MetricMap muessen alle Datenreihen gleich groß sein(Falls das Probleme bringt muss ich
     //    vielleicht was aendern).
+    //alternativ vielleicht schon in MzTab Datenstrukturen speichern,
     class OPENMS_DLLAPI MetricMap
     {
     vector<String> Metadata;
@@ -59,8 +60,10 @@
             Columnlength(0)
             {
             }
-        //important fuction for metric map class
-        bool isEmpty(){return ~isfilled;};  //shows if class Element has been filled
+        //important fuctions for metric map class
+        bool isEmpty(){return !isfilled;};  //shows if class Element has been filled
+
+        int size(){return Columnlength;};
 
         void pushMetaData(String in){Metadata.push_back(in);};  //writes in Metadata
 
@@ -72,9 +75,9 @@
 
         vector<pair<String,String>> getHeads();//Returns all Heads. With Type of its Data(Sting/Size). I.e:([Proteins ,String],[Length,Size],[NumberOfProteins,Size],..)
 
-	      vector<Size> getSizesByHead(String WantedHead){return DataStringNum[WantedHead];};//gives one line of Data(by its head)(if Data is made out of numbers)
+	      vector<Size> getSizesByHead(String WantedHead){return DataStringNum[WantedHead];};//gives one line of Data by its head(if Data is made out of numbers)
 
-        vector<String> getStringsByHead(String WantedHead){return DataStrings[WantedHead];};//gives one line of Data(by its head)(if Data is made out of Strings)
+        vector<String> getStringsByHead(String WantedHead){return DataStrings[WantedHead];};//gives one line of Data by its head(if Data is made out of Strings)
     };
         void MetricMap::pushDataString(String Head, vector<String> Data){
             if(Columnlength==0||Columnlength==Data.size()){
@@ -154,17 +157,18 @@
               }
             while(line<maxRow){
                 fl.getRow(line,CurrentRow);
-                if((CurrentRow[0]=="\"peptide\"")||(CurrentRow[0]=="\"protein\"")){
+                if(((CurrentRow[0]=="\"peptide\"")||(CurrentRow[0]=="\"protein\""))&&(headfinder==false)){
+                    headfinder = true;
                     for(int l = 0; l<MetaList.size();l++){
                         outMap.pushMetaData(MetaList[l]);
                     }
                     a = CurrentRow[0]=="\"peptide\""?"peptide":"protein";
                 }
-                else{
-                    line = maxRow;
-                }
-                if(headfinder){
+                else if(headfinder==true){
                     DataList.push_back(CurrentRow[0]);
+                }
+                if(!headfinder){
+                    line = maxRow;
                 }
                 line++;
             }
@@ -180,8 +184,30 @@
     void Metriken::runAllMetrics(){
         ////////////////Metrik1: Protein And Peptide Count /////////////////////////////////
         MetricMap ProteinAndPeptideCountData;
-        int k = this->ProteinAndPeptideCount_(ProteinAndPeptideCountData);
+        int a = this->ProteinAndPeptideCount_(ProteinAndPeptideCountData);
 	      ////////////////Metrik2: ....................../////////////////////////////////////
+        ////////////////Metrik3: ....................../////////////////////////////////////
+        ////////////////Metrik4: ....................../////////////////////////////////////
+        ////////////////Metrik5: ....................../////////////////////////////////////
+
+        //MzTab Writer:
+        if(a == 1){
+          MzTab MzTabAusgabe;
+          int numOfPeptides = ProteinAndPeptideCountData.size();
+          vector<String> allPeptides = ProteinAndPeptideCountData.getStringsByHead("peptide");
+          MzTabPeptideSectionRows ROWS;
+          for(int i = 0; i< numOfPeptides;i++){
+            MzTabPeptideSectionRow ROW;
+            MzTabString Seq;
+            Seq.set(allPeptides[i]);
+            cout<<Seq.get()<<endl;
+            ROW.sequence = Seq;
+            ROWS.push_back(ROW);
+          }
+          MzTabAusgabe.setPeptideSectionRows(ROWS);
+          MzTabFile().store("ausgabe1",MzTabAusgabe);
+        }
+
 
 
 

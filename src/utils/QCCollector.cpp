@@ -71,8 +71,8 @@ protected:
 				CMapVec.push_back(CMap);
 			}
 		}
-		Metriken metrik(VFeatureMaps,IDXPeptides,IDXProteins,VecCSV,CMapVec);
-		metrik.runAllMetrics();
+		Metriken metricElemet(VFeatureMaps,IDXPeptides,IDXProteins,VecCSV,CMapVec);
+		metricElemet.runAllMetrics();
 		return EXECUTION_OK;
 	}
 };

@@ -28,8 +28,8 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Dragan Haberland, Leo Wurthilini, Mohammad El-Ali$
-// $Authors: Dragan Haberland, Leo Wurthilini, Mohammad El-Ali $
+// $Maintainer: Anton Haberland, Leo Wurth, Mohammad El-Ismail$
+// $Authors: Anton Haberland, Leo Wurth, Mohammad El-Ismail $
 // --------------------------------------------------------------------------
 #include <vector>
 #include <OpenMS/FORMAT/MzTabFile.h>
@@ -41,6 +41,15 @@
 using namespace std;
 using namespace OpenMS;
 
+
+    /*class OPENMS_DLLAPI MetrikOutput
+    {
+    vector<String> Metadata;
+    vector<String> Heads;
+    vector<String> Data;
+    public
+    */
+
     class OPENMS_DLLAPI Metriken
     {
     //das sind die eingelesenen Daten, sie können von den Metriken gelesen aber nicht umgeschrieben werden//
@@ -48,13 +57,15 @@ using namespace OpenMS;
     const vector<vector<PeptideIdentification>> PeptidesId;	//Peptide der IDXML's
     const vector<vector<ProteinIdentification>> ProteinsId;	//Proteine der IDXML's
     const vector<CsvFile> CsvFiles;   				//Alle CSV Datein
+    const vector<ConsensusMap> ConsensusMaps;    //Alle ConsensusXMLFiles
  
     public:
-        Metriken(const vector<FeatureMap> FM, const vector<vector<PeptideIdentification>> PeI, const vector<vector<ProteinIdentification>> PrI,const vector<CsvFile> CF):
+        Metriken(const vector<FeatureMap> FM, const vector<vector<PeptideIdentification>> PeI, const vector<vector<ProteinIdentification>> PrI,const vector<CsvFile> CF, const vector<ConsensusMap> CM):
         FeatureMaps(FM),
         PeptidesId(PeI),
         ProteinsId(PrI),
-        CsvFiles(CF)
+        CsvFiles(CF),
+        ConsensusMaps(CM)
         {
         }
         void runAllMetrics();
@@ -122,7 +133,7 @@ using namespace OpenMS;
         vector<vector<Size>> ProteinAndPeptideCount;
         vector<StringList> ProteinAndPeptideCountMetaData;
         int a = this->ProteinAndPeptideCount_(ProteinAndPeptideCount,ProteinAndPeptideCountMetaData);
-	////////////////Metrik2: ....................../////////////////////////////////////
+	    ////////////////Metrik2: ....................../////////////////////////////////////
 
 
 

@@ -6,6 +6,7 @@
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/CsvFile.h>
+#include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/CONCEPT/QCCollector.h>
 
@@ -43,6 +44,7 @@ protected:
 		vector<VProtID> IDXProteins;
 		vector<FeatureMap> VFeatureMaps;
 		vector<CsvFile> VecCSV; 
+		vector<ConsensusMap> CMapVec;
 		for (Size i=0;i<ins.size();++i){
 			FileTypes::Type in_type = FileHandler::getType(ins[i]);
 			if (in_type == FileTypes::IDXML){
@@ -62,9 +64,13 @@ protected:
 				FeatureXMLFile().load(ins[i], features);
 				VFeatureMaps.push_back(features);
 			}
-			
+			else if(in_type == FileTypes::CONSENSUSXML){
+				ConsensusMap CMap;
+				ConsensusXMLFile().load(ins[i],CMap);
+				CMapVec.push_back(CMap);
+			}
 		}
-		Metriken metrik(VFeatureMaps,IDXPeptides,IDXProteins,VecCSV);
+		Metriken metrik(VFeatureMaps,IDXPeptides,IDXProteins,VecCSV,CMapVec);
 		metrik.runAllMetrics();
 		return EXECUTION_OK;
 	}

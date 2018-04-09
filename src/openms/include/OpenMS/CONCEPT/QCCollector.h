@@ -40,25 +40,74 @@
 
 
 
-
-    /*class OPENMS_DLLAPI MetrikMap
+    //der Plan für MetricMap ist eine Art Tabelle. Wenn ihr Daten hinein pusht dann wird die Überschrift der Tabellenspalte und die Daten
+    //    der ganzen Spalte erwartet. In einer MetricMap muessen alle Datenreihen gleich groß sein(Falls das Probleme bringt muss ich
+    //    vielleicht was aendern).
+    class OPENMS_DLLAPI MetricMap
     {
     vector<String> Metadata;
     map<String,vector<String>> DataStrings;
     map<String,vector<Size>> DataStringNum;
+    bool isfilled;
+    Size Columnlength;
     public:
-        MetrikMap():
+        MetricMap():
             Metadata(),
-            DataStrings(),in
-            DataStringNum()
+            DataStrings(),
+            DataStringNum(),
+            isfilled(false),
+            Columnlength(0)
             {
             }
-        void pushMetaData(String in){Metadata.push_back(in)};
-        void pushDataString(String, vector<String>);
-        void pushDataSize(String,vector<Size>);
-        vector<pair<String,String>> getHeads();
-    };*/        
-    
+        //important fuction for metric map class
+        bool isEmpty(){return ~isfilled;};  //shows if class Element has been filled
+
+        void pushMetaData(String in){Metadata.push_back(in);};  //writes in Metadata
+
+        vector<String> getMetaData(){return Metadata;};         //returns all saved Metadata
+
+        void pushDataString(String, vector<String>);            //Saves Data with its Head. Example (Proteins,[ProteinA,ProteinB.ProteinC,...])
+
+        void pushDataSize(String,vector<Size>);                 //Saves Data with its Head (if Data = numbers). Bsp:(Length,[3,5,3,9,5,...])
+
+        vector<pair<String,String>> getHeads();//Returns all Heads. With Type of its Data(Sting/Size). I.e:([Proteins ,String],[Length,Size],[NumberOfProteins,Size],..)
+
+	      vector<Size> getSizesByHead(String WantedHead){return DataStringNum[WantedHead];};//gives one line of Data(by its head)(if Data is made out of numbers)
+
+        vector<String> getStringsByHead(String WantedHead){return DataStrings[WantedHead];};//gives one line of Data(by its head)(if Data is made out of Strings)
+    };
+        void MetricMap::pushDataString(String Head, vector<String> Data){
+            if(Columnlength==0||Columnlength==Data.size()){
+                  DataStrings.insert(DataStrings.end(),pair<String,vector<String>>(Head,Data));
+                  isfilled = isfilled||true;
+                  Columnlength = Data.size();
+            }
+            else{
+              cout << "MetricMap Error: Wrongly sized Datavector" << endl;
+            }
+        }
+        void MetricMap::pushDataSize(String Head, vector<Size> Data){
+            if(Columnlength==0||Columnlength==Data.size()){
+              DataStringNum.insert(DataStringNum.end(),pair<String,vector<Size>>(Head,Data));
+              isfilled = isfilled||true;
+              Columnlength=Data.size();
+            }
+            else{
+              cout << "MetricMap Error: Wrongly sized Datavector" << '\n';
+            }
+        }
+        vector<pair<String,String>> MetricMap::getHeads(){
+            vector<pair<String,String>> output;
+            for(map<String,vector<String>>::const_iterator it = DataStrings.begin();it!=DataStrings.end();it++){
+                output.push_back(pair<String,String>(it->first,"String"));
+            }
+            for(map<String,vector<Size>>::const_iterator it = DataStringNum.begin(); it != DataStringNum.end();it++){
+                output.push_back(pair<String,String>(it->first,"Size"));
+            }
+            return output;
+        }
+
+
 
     class OPENMS_DLLAPI Metriken
     {
@@ -68,7 +117,7 @@
     const vector<vector<ProteinIdentification>> ProteinsId;	//Proteine der IDXML's
     const vector<CsvFile> CsvFiles;   				//Alle CSV Datein
     const vector<ConsensusMap> ConsensusMaps;    //Alle ConsensusXMLFiles
- 
+
     public:
         Metriken(const vector<FeatureMap> FM, const vector<vector<PeptideIdentification>> PeI, const vector<vector<ProteinIdentification>> PrI,const vector<CsvFile> CF, const vector<ConsensusMap> CM):
         FeatureMaps(FM),
@@ -80,8 +129,8 @@
         }
         void runAllMetrics();
     protected:
-        int ProteinAndPeptideCount_(vector<vector<Size>>&,vector<StringList>&) const;
-	//->Hier Metriken deklarieren<-//       
+        int ProteinAndPeptideCount_(MetricMap&) const;
+	//->Hier Metriken deklarieren<-//
 	};
 
 
@@ -89,71 +138,51 @@
     	//->Hier die Metriken definieren<-//
 
 
-    int Metriken::ProteinAndPeptideCount_(vector<vector<Size>>& Results,vector<StringList>& MetaData) const{
-        typedef vector<Size> VSize;
-        for(vector<CsvFile>::const_iterator it = CsvFiles.begin(); it!=CsvFiles.end();it++){
-            StringList MetaList;
-            VSize Abundances;
-            VSize AbundancesPosition;
-            bool headfinder = false;
-            CsvFile fl = *it;
-            Size line = 0;
-            StringList CurrentRow;
-            Size maxRow = fl.rowCount();
-            while(fl.getRow(line,CurrentRow)==false){
+    Int Metriken::ProteinAndPeptideCount_(MetricMap& outMap) const{
+            for(vector<CsvFile>::const_iterator it = CsvFiles.begin(); it!=CsvFiles.end();it++){
+              String a;
+              StringList MetaList;
+              StringList DataList;
+              bool headfinder = false;
+              CsvFile fl = *it;
+              Size line = 0;
+              StringList CurrentRow;
+              Size maxRow = fl.rowCount();
+              while(fl.getRow(line,CurrentRow)==false){
                 MetaList.push_back(CurrentRow[0]);
                 line++;
-            }
-            cout<<line<<" <- line"<<endl;
+              }
             while(line<maxRow){
                 fl.getRow(line,CurrentRow);
                 if((CurrentRow[0]=="\"peptide\"")||(CurrentRow[0]=="\"protein\"")){
-                    regex e("(abundance_)[0-9]+");
-                    MetaData.push_back(MetaList);
-                    for(int k = 2;k<CurrentRow.size();k++){
-                        smatch m;
-                        regex_search(CurrentRow[k],m,e);
-                        if(m.size()>0){
-                            AbundancesPosition.push_back(k);
-                            headfinder = true;
-                        }
+                    for(int l = 0; l<MetaList.size();l++){
+                        outMap.pushMetaData(MetaList[l]);
                     }
-                    Abundances.resize(AbundancesPosition.size(),0);
+                    a = CurrentRow[0]=="\"peptide\""?"peptide":"protein";
                 }
-                else if(headfinder){
-                    for(int q = 0;q<Abundances.size();q++){
-                        Abundances[q]+= stoi(CurrentRow[AbundancesPosition[q]]);
-                    }
+                else{
+                    line = maxRow;
+                }
+                if(headfinder){
+                    DataList.push_back(CurrentRow[0]);
                 }
                 line++;
             }
-            cout<<Abundances[0]<<" <- Abundances[0]"<<endl;
-            cout<<Abundances[1]<<" <- Abundances[1]"<<endl;
-            cout<<Abundances[2]<<" <- Abundances[2]"<<endl;
-            headfinder==true ? Results.push_back(Abundances): Abundances.clear();
-        }        
-        return Results.size()>0?1:0;
+            headfinder==true ? outMap.pushDataString(a,DataList): DataList.clear();
+        }
+        return outMap.isEmpty()?0:1;
     }
 
 
 
-    
+        //Wenn ihr die Metriken schreibt lasst euch bitte ein Int ausgeben 1 wenn erfolgreich, 0  wenn nicht
+        //Die Daten die ihr erhaltet am besten als MetricMap, die wichtigen Funktionen dafür stehen oben
     void Metriken::runAllMetrics(){
         ////////////////Metrik1: Protein And Peptide Count /////////////////////////////////
-        vector<vector<Size>> ProteinAndPeptideCount;
-        vector<StringList> ProteinAndPeptideCountMetaData;
-        int a = this->ProteinAndPeptideCount_(ProteinAndPeptideCount,ProteinAndPeptideCountMetaData);
-	    ////////////////Metrik2: ....................../////////////////////////////////////
+        MetricMap ProteinAndPeptideCountData;
+        int k = this->ProteinAndPeptideCount_(ProteinAndPeptideCountData);
+	      ////////////////Metrik2: ....................../////////////////////////////////////
 
 
 
     }
-   
-
-    
-
-
-
-
-
-

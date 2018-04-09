@@ -19,7 +19,7 @@ using namespace std;
 class QCCollector:
 	public TOPPBase
 {
-public: 
+public:
 	QCCollector():
 	TOPPBase("QCCollector","Will collect several Files from several utils.",false)
 	{
@@ -44,7 +44,7 @@ protected:
 		vector<VPepID> IDXPeptides;
 		vector<VProtID> IDXProteins;
 		vector<FeatureMap> VFeatureMaps;
-		vector<CsvFile> VecCSV; 
+		vector<CsvFile> VecCSV;
 		vector<ConsensusMap> CMapVec;
 		for (Size i=0;i<ins.size();++i){
 			FileTypes::Type in_type = FileHandler::getType(ins[i]);
@@ -58,7 +58,7 @@ protected:
 			else if (in_type == FileTypes::CSV){
 				CsvFile fl(ins[i],'	',false,-1);
 				VecCSV.push_back(fl);
-				
+
 			}
 			else if (in_type == FileTypes::FEATUREXML){
 				FeatureMap features;
@@ -81,4 +81,3 @@ int main(int argc, const char** argv)
 QCCollector tool;
 return tool.main(argc,argv);
 }
-	

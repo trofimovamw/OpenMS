@@ -38,17 +38,27 @@
 #include <regex>
 
 
-using namespace std;
-using namespace OpenMS;
 
 
-    /*class OPENMS_DLLAPI MetrikOutput
+
+    /*class OPENMS_DLLAPI MetrikMap
     {
     vector<String> Metadata;
-    vector<String> Heads;
-    vector<String> Data;
-    public
-    */
+    map<String,vector<String>> DataStrings;
+    map<String,vector<Size>> DataStringNum;
+    public:
+        MetrikMap():
+            Metadata(),
+            DataStrings(),in
+            DataStringNum()
+            {
+            }
+        void pushMetaData(String in){Metadata.push_back(in)};
+        void pushDataString(String, vector<String>);
+        void pushDataSize(String,vector<Size>);
+        vector<pair<String,String>> getHeads();
+    };*/        
+    
 
     class OPENMS_DLLAPI Metriken
     {

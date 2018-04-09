@@ -8,12 +8,13 @@
 #include <OpenMS/FORMAT/CsvFile.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/CONCEPT/QCCollector.h>
 
 
 
 using namespace OpenMS;
 using namespace std;
+
+#include <OpenMS/CONCEPT/QCCollector.h>
 
 class QCCollector:
 	public TOPPBase

@@ -200,7 +200,6 @@
             MzTabPeptideSectionRow ROW;
             MzTabString Seq;
             Seq.set(allPeptides[i]);
-            cout<<Seq.get()<<endl;
             ROW.sequence = Seq;
             ROWS.push_back(ROW);
           }

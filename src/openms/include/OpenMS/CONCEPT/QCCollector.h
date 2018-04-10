@@ -115,24 +115,24 @@
     class OPENMS_DLLAPI Metriken
     {
     //das sind die eingelesenen Daten, sie können von den Metriken gelesen aber nicht umgeschrieben werden//
-    const vector<FeatureMap> FeatureMaps;			//Alle FeatureXML Datein
-    const vector<vector<PeptideIdentification>> PeptidesId;	//Peptide der IDXML's
-    const vector<vector<ProteinIdentification>> ProteinsId;	//Proteine der IDXML's
-    const vector<CsvFile> CsvFiles;   				//Alle CSV Datein
-    const vector<ConsensusMap> ConsensusMaps;    //Alle ConsensusXMLFiles
+    //  die Vectoren enthalten alle eingelesenen Datein in den entsperechenden Formaten. Der erste Wert in jedem Paar
+    //  gibt an aus welchem TOPPTOOL die Datei kommt.
+    const vector<pair<string,FeatureMap>> FeatureMaps;			//Alle FeatureXML Datein
+    const vector<pair<string,string>> Idxml;	//Peptide der IDXML's
+    const vector<pair<string,CsvFile>> CFiles;	//Proteine der IDXML's;
+    const vector<pair<string,ConsensusMap>> ConsensusMaps;    //Alle ConsensusXMLFiles
 
     public:
-        Metriken(const vector<FeatureMap> FM, const vector<vector<PeptideIdentification>> PeI, const vector<vector<ProteinIdentification>> PrI,const vector<CsvFile> CF, const vector<ConsensusMap> CM):
-        FeatureMaps(FM),
-        PeptidesId(PeI),
-        ProteinsId(PrI),
-        CsvFiles(CF),
-        ConsensusMaps(CM)
+        Metriken(const vector<pair<string,FeatureMap>> fvec, const vector<pair<string,string>> ivec, const vector<pair<string,CsvFile>> cvec,const vector<pair<string,ConsensusMap>> CMapVec):
+        FeatureMaps(fvec),
+        Idxml(ivec),
+        CFiles(cvec),
+        ConsensusMaps(CMapVec)
         {
         }
         void runAllMetrics();
     protected:
-        int ProteinAndPeptideCount_(MetricMap&) const;
+        int ProteinAndPeptideCount_(MetricMap&,MetricMap&) const;
 	//->Hier Metriken deklarieren<-//
 	};
 
@@ -141,40 +141,44 @@
     	//->Hier die Metriken definieren<-//
 
 
-    Int Metriken::ProteinAndPeptideCount_(MetricMap& outMap) const{
-            for(vector<CsvFile>::const_iterator it = CsvFiles.begin(); it!=CsvFiles.end();it++){
-              String a;
-              StringList MetaList;
-              StringList DataList;
-              bool headfinder = false;
-              CsvFile fl = *it;
-              Size line = 0;
-              StringList CurrentRow;
-              Size maxRow = fl.rowCount();
-              while(fl.getRow(line,CurrentRow)==false){
-                MetaList.push_back(CurrentRow[0]);
-                line++;
-              }
-            while(line<maxRow){
-                fl.getRow(line,CurrentRow);
-                if(((CurrentRow[0]=="\"peptide\"")||(CurrentRow[0]=="\"protein\""))&&(headfinder==false)){
-                    headfinder = true;
-                    for(int l = 0; l<MetaList.size();l++){
-                        outMap.pushMetaData(MetaList[l]);
-                    }
-                    a = CurrentRow[0]=="\"peptide\""?"peptide":"protein";
-                }
-                else if(headfinder==true){
-                    DataList.push_back(CurrentRow[0]);
-                }
-                if(!headfinder){
-                    line = maxRow;
-                }
-                line++;
+    Int Metriken::ProteinAndPeptideCount_(MetricMap& outPep,MetricMap& outProt) const{
+      vector<CsvFile> CsvFiles;
+      for(vector<pair<string,CsvFile>>::const_iterator it = CFiles.begin();it!=CFiles.end();++it){
+        if(it->first=="ProteinQuantifier"){CsvFiles.push_back(it->second);}
+      }
+        for(vector<CsvFile>::const_iterator it = CsvFiles.begin(); it!=CsvFiles.end();it++){
+            String a;
+            StringList MetaList;
+            StringList DataList;
+            bool headfinder = false;
+            CsvFile fl = *it;
+            Size line = 0;
+            StringList CurrentRow;
+            Size maxRow = fl.rowCount();
+            while(fl.getRow(line,CurrentRow)==false){
+              MetaList.push_back(CurrentRow[0]);
+              line++;
             }
-            headfinder==true ? outMap.pushDataString(a,DataList): DataList.clear();
-        }
-        return outMap.isEmpty()?0:1;
+            while(line<maxRow){
+              fl.getRow(line,CurrentRow);
+              if(((CurrentRow[0]=="\"peptide\"")||(CurrentRow[0]=="\"protein\""))&&(headfinder==false)){
+                  headfinder = true;
+                  a = CurrentRow[0]=="\"peptide\""?"peptide":"protein";
+                  for(int l = 0; l<MetaList.size();l++){
+                      a=="peptide"?outPep.pushMetaData(MetaList[l]):outProt.pushMetaData(MetaList[l]);
+                  }
+              }
+              else if(headfinder==true){
+                  DataList.push_back(CurrentRow[0]);
+              }
+              if(!headfinder){
+                  line = maxRow;
+              }
+              line++;
+          }
+          headfinder==true ? a=="peptide" ? outPep.pushDataString(a,DataList) : outProt.pushDataString(a,DataList) : DataList.clear();
+      }
+      return outPep.isEmpty()&&outProt.isEmpty()?0:1;
     }
 
 
@@ -183,31 +187,45 @@
         //Die Daten die ihr erhaltet am besten als MetricMap, die wichtigen Funktionen dafür stehen oben
     void Metriken::runAllMetrics(){
         ////////////////Metrik1: Protein And Peptide Count /////////////////////////////////
-        MetricMap ProteinAndPeptideCountData;
-        int a = this->ProteinAndPeptideCount_(ProteinAndPeptideCountData);
+        MetricMap PeptideCountData;
+        MetricMap ProteinCountData;
+        int papc = this->ProteinAndPeptideCount_(PeptideCountData,ProteinCountData);
 	      ////////////////Metrik2: ....................../////////////////////////////////////
         ////////////////Metrik3: ....................../////////////////////////////////////
         ////////////////Metrik4: ....................../////////////////////////////////////
         ////////////////Metrik5: ....................../////////////////////////////////////
 
         //MzTab Writer:
-        if(a == 1){
-          MzTab MzTabAusgabe;
-          int numOfPeptides = ProteinAndPeptideCountData.size();
-          vector<String> allPeptides = ProteinAndPeptideCountData.getStringsByHead("peptide");
-          MzTabPeptideSectionRows ROWS;
-          for(int i = 0; i< numOfPeptides;i++){
-            MzTabPeptideSectionRow ROW;
-            MzTabString Seq;
-            Seq.set(allPeptides[i]);
-            ROW.sequence = Seq;
-            ROWS.push_back(ROW);
-          }
-          MzTabAusgabe.setPeptideSectionRows(ROWS);
-          MzTabFile().store("ausgabe1",MzTabAusgabe);
+        MzTabFile MzTabOutputFile;
+        MzTab MzTabAusgabe;
+        if(papc == 1){
+            int numOfPeptides = PeptideCountData.size();
+            int numOfProteins = ProteinCountData.size();
+            vector<String> empty;
+            vector<String> allPeptides = numOfPeptides>0?PeptideCountData.getStringsByHead("peptide"):empty;
+            vector<String> allProteins = numOfProteins>0?ProteinCountData.getStringsByHead("protein"):empty;
+            MzTabPeptideSectionRows PepROWS;
+            MzTabProteinSectionRows ProtROWS;
+            if(numOfPeptides>0){
+              for(int i = 0; i< numOfPeptides;i++){
+                MzTabPeptideSectionRow PepROW;
+                MzTabString PepSeq;
+                PepSeq.set(allPeptides[i]);
+                PepROW.sequence = PepSeq;
+                PepROWS.push_back(PepROW);
+              }
+            }
+            if(numOfProteins>0){
+              for(int i = 0; i< numOfProteins;i++){
+                MzTabProteinSectionRow ProtROW;
+                MzTabString ProtSeq;
+                ProtSeq.set(allProteins[i]);
+                ProtROW.description = ProtSeq;
+                ProtROWS.push_back(ProtROW);
+              }
+            }
+            MzTabAusgabe.setPeptideSectionRows(PepROWS);
+            MzTabAusgabe.setProteinSectionRows(ProtROWS);
         }
-
-
-
-
-    }
+        MzTabOutputFile.store("output",MzTabAusgabe);
+      }

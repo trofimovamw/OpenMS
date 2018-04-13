@@ -121,13 +121,14 @@
     const vector<pair<string,string>> Idxml;	//Peptide der IDXML's
     const vector<pair<string,CsvFile>> CFiles;	//Proteine der IDXML's;
     const vector<pair<string,ConsensusMap>> ConsensusMaps;    //Alle ConsensusXMLFiles
-
+    String out;
     public:
-        Metriken(const vector<pair<string,FeatureMap>> fvec, const vector<pair<string,string>> ivec, const vector<pair<string,CsvFile>> cvec,const vector<pair<string,ConsensusMap>> CMapVec):
+        Metriken(const vector<pair<string,FeatureMap>> fvec, const vector<pair<string,string>> ivec, const vector<pair<string,CsvFile>> cvec,const vector<pair<string,ConsensusMap>> CMapVec,String out):
         FeatureMaps(fvec),
         Idxml(ivec),
         CFiles(cvec),
-        ConsensusMaps(CMapVec)
+        ConsensusMaps(CMapVec),
+        out(out)
         {
         }
         void runAllMetrics();
@@ -197,7 +198,7 @@
 
         //MzTab Writer:
         MzTabFile MzTabOutputFile;
-        MzTab MzTabAusgabe;
+        MzTab mztab;
         if(papc == 1){
             int numOfPeptides = PeptideCountData.size();
             int numOfProteins = ProteinCountData.size();
@@ -224,8 +225,8 @@
                 ProtROWS.push_back(ProtROW);
               }
             }
-            MzTabAusgabe.setPeptideSectionRows(PepROWS);
-            MzTabAusgabe.setProteinSectionRows(ProtROWS);
+            mztab.setPeptideSectionRows(PepROWS);
+            mztab.setProteinSectionRows(ProtROWS);
         }
-        MzTabOutputFile.store("output",MzTabAusgabe);
+        MzTabOutputFile.store(out,mztab);
       }

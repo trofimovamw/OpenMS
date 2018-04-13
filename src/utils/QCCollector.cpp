@@ -34,6 +34,8 @@ protected:
 	StringList valid_in_tools = ListUtils::create<String>("IDMapper,FalseDiscoveryRate,ProteinQuantifier");
 	registerInputFileList_("in","<files>", StringList(), "Input files");
 	setValidFormats_("in", valid_in);
+	registerOutputFile_("out","<format>","","mzTAB");
+	setValidFormats_("out",ListUtils::create<String>("tsv"));
 	registerStringList_("in_tools","<tools>", StringList(), "tool from which the data come");
 	setValidStrings_("in_tools", valid_in_tools);
 }
@@ -41,6 +43,8 @@ ExitCodes main_(int, const char**)
 {
 StringList Tools = getStringList_("in_tools");
 StringList ins = getStringList_("in");
+String out = getStringOption_("out");
+
 //for(Size i=0;i<Tools.size();i++){cout<<Tools[i]<<endl;cout<<in[i]<<endl;}
 vector<pair<string,FeatureMap>> fvec;
 vector<pair<string,CsvFile>> cvec;
@@ -96,7 +100,7 @@ for (Size i=0;i<ins.size();++i){
 		CMapVec.push_back(make_pair(Tools[i],CMap));
 	}
 }
-Metriken Metrik(fvec,ivec,cvec,CMapVec);
+Metriken Metrik(fvec,ivec,cvec,CMapVec,out);
 	Metrik.runAllMetrics();
 return EXECUTION_OK;
 }

@@ -36,10 +36,12 @@ protected:
 	  registerInputFileList_("in_IDMapper","<files>", StringList(), "Input files",false,false);
 	  registerInputFileList_("in_FalseDiscoveryRate","<files>", StringList(), "Input files",false,false);
 	  registerInputFileList_("in_FeatureLinkerUnlabeledQT","<files>", StringList(), "Input files",false,false);
+    registerInputFileList_("in_MapRTTransformer","<files>",StringList(),"Input files",false,false);
 	  setValidFormats_("in_ProteinQuantifier", ListUtils::create<String>("csv"));
 	  setValidFormats_("in_IDMapper", ListUtils::create<String>("FeatureXML"));
 	  setValidFormats_("in_FalseDiscoveryRate", ListUtils::create<String>("IdXML"));
 	  setValidFormats_("in_FeatureLinkerUnlabeledQT", ListUtils::create<String>("consensusXML"));
+    setValidFormats_("in_MapRTTransformer",ListUtils::create<String>("FeatureXML"));
 	  registerOutputFile_("out", "<file>", "", "Output file (mzTab)", true);
     setValidFormats_("out", ListUtils::create<String>("tsv"));
   }
@@ -50,6 +52,7 @@ protected:
     StringList ins_IDMapper = getStringList_("in_IDMapper");
     StringList ins_FalseDiscoveryRate = getStringList_("in_FalseDiscoveryRate");
     StringList ins_FeatureLinkerUnlabeledQT = getStringList_("in_FeatureLinkerUnlabeledQT");
+    StringList ins_MapRTTransformer =getStringList_("in_MapRTTransformer");
     String out = getStringOption_("out");
     vector<pair<String,FeatureMap>> fvec;
     vector<pair<String,CsvFile>> cvec;
@@ -63,7 +66,7 @@ protected:
 				cvec.push_back(make_pair("ProteinQuantifier",fl));
 			}
     }
-		else if (ins_IDMapper.size()!=0)
+		if (ins_IDMapper.size()!=0)
 		{
 		  for(StringList::const_iterator it=ins_IDMapper.begin();it!=ins_IDMapper.end();++it)
 			{
@@ -72,14 +75,14 @@ protected:
 		    fvec.push_back(make_pair("IDMapper",features));
 	    }
     }
-    else if (ins_FalseDiscoveryRate.size()!=0)
+    if (ins_FalseDiscoveryRate.size()!=0)
 		{
 		  for(StringList::const_iterator it=ins_FalseDiscoveryRate.begin();it!=ins_FalseDiscoveryRate.end();++it)
 			{
 			  ivec.push_back(make_pair("FalseDiscoveryRate",*it));
 		  }
 	  }
-    else if(ins_FeatureLinkerUnlabeledQT.size()!=0)
+    if(ins_FeatureLinkerUnlabeledQT.size()!=0)
 		{
 		  for(StringList::const_iterator it=ins_FeatureLinkerUnlabeledQT.begin();it!=ins_FeatureLinkerUnlabeledQT.end();++it)
 			{
@@ -88,6 +91,15 @@ protected:
 			  CMapVec.push_back(make_pair("FeatureLinkerUnlabeledQT",CMap));
 		  }
 	  }
+    if(ins_MapRTTransformer.size() != 0)
+    {
+      for(StringList::const_iterator it = ins_MapRTTransformer.begin();it != ins_MapRTTransformer.end(); ++it)
+      {
+        FeatureMap features;
+        FeatureXMLFile().load(*it,features);
+        fvec.push_back(make_pair("MapRTTTransformer",features));
+      }
+    }
 		Metrics metricObj(fvec,ivec,cvec,CMapVec,out);
 	    metricObj.runAllMetrics();
   return EXECUTION_OK;
@@ -98,4 +110,3 @@ int main(int argc, const char** argv)
   QCCollector tool;
   return tool.main(argc,argv);
 }
-

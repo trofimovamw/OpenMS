@@ -14,6 +14,7 @@ public:
     MetricMap():
         Metadata_(),
         DataStrings_(),
+        DataStringFloat_(),
         DataStringNum_(),
         isfilled_(false),
         Columnlength_(0)
@@ -33,15 +34,20 @@ public:
 
     void pushDataSize(OpenMS::String,std::vector<OpenMS::Size>);                 //Saves Data with its Head (if Data = numbers). Bsp:(Length,[3,5,3,9,5,...])
 
+	void pushDataFloat(OpenMS::String,std::vector<float>);
+
     std::vector<std::pair<OpenMS::String,OpenMS::String>> getHeads();//Returns all Heads. With Type of its Data(Sting/Size). I.e:([Proteins ,String],[Length,Size],[NumberOfProteins,Size],..)
 
     std::vector<OpenMS::Size> getSizesByHead(OpenMS::String WantedHead);//gives one line of Data by its head(if Data is made out of numbers)
-
+	
+	std::vector<float> getFloatsByHead(OpenMS::String WantedHead);
+	
     std::vector<OpenMS::String> getStringsByHead(OpenMS::String WantedHead);//gives one line of Data by its head(if Data is made out of Strings)
 protected:
     std::vector<OpenMS::String> Metadata_;
     std::map<OpenMS::String,std::vector<OpenMS::String>> DataStrings_;
     std::map<OpenMS::String,std::vector<OpenMS::Size>> DataStringNum_;
+    std::map<OpenMS::String,std::vector<float>> DataStringFloat_;
     bool isfilled_;
     OpenMS::Size Columnlength_;
 };

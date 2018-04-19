@@ -10,6 +10,7 @@
 #include <OpenMS/CONCEPT/QCMetrics.h>
 #include <OpenMS/CONCEPT/QCMetricMap.h>
 #include <OpenMS/CONCEPT/QCProteinAndPeptideCount.h>
+#include <OpenMS/CONCEPT/QCMBRalignment.h>
 #include <vector>
 #include <utility>
 
@@ -30,6 +31,14 @@ QCProteinAndPeptideCount papc(CFiles_);
 MetricMap PeptideCountData;
 MetricMap ProteinCountData;
 int a = papc.ProtAndPepCount(PeptideCountData,ProteinCountData);
+////////////////Metrik2: MBR Alignment /////////////////////////////////
+QCMBRalignment mbra(FeatMaps_);
+MetricMap raws;
+MetricMap outSeq; 
+MetricMap outCorrRT; 
+MetricMap outOrigRT; 
+MetricMap outSpectra;
+int b = mbra.MBRAlignment(raws,outSeq,outCorrRT,outOrigRT,outSpectra);
 ////////////////Metrik3: ....................../////////////////////////////////////
 ////////////////Metrik4: ....................../////////////////////////////////////
 ////////////////Metrik5: ....................../////////////////////////////////////
@@ -70,5 +79,64 @@ if(a == 1)
     mztab.setPeptideSectionRows(PepROWS);
     mztab.setProteinSectionRows(ProtROWS);
 }
+
+		if(b == 1){
+            int numOfcorrRT = outCorrRT.size();
+            int numOfpeptides = outSeq.size();
+            int numOforigRT = outOrigRT.size();
+            int numOfRaw = raws.size();
+            //vector<String> empty;
+            //vector<float> emptyI;
+            vector<float> allCorrRT = outCorrRT.getFloatsByHead("corrected_RT");
+            vector<float> allOriRT = outOrigRT.getFloatsByHead("original_RT");
+            vector<String> allPeptides = outSeq.getStringsByHead("sequences");
+            vector<String> allRaws = raws.getStringsByHead("raw_file");
+            vector<String> spectre_ref = outSpectra.getStringsByHead("spectre_id");
+            MzTabPeptideSectionRows PepROWS;
+            if(numOfcorrRT>0){
+              for(int i = 0; i< numOfpeptides;i++){
+                MzTabPeptideSectionRow PepROW;
+                MzTabString PepSeq;
+                MzTabDouble corrRT;
+                MzTabDouble oriRT;
+                MzTabSpectraRef ref;
+                
+                ref.setSpecRef(spectre_ref[i]);
+                String out_ref = ref.getSpecRef();
+                cout << out_ref << endl;
+                PepSeq.set(allPeptides[i]);
+                corrRT.set(allCorrRT[i]);
+                oriRT.set(allOriRT[i]);
+                vector<MzTabDouble> cRTs;
+                cRTs.push_back (corrRT);
+                cRTs.push_back (oriRT);
+                MzTabDoubleList listC;
+                listC.set(cRTs);
+                PepROW.sequence = PepSeq;
+                PepROW.retention_time = listC;
+                PepROW.spectra_ref = ref;
+                
+                
+                //typedef std::pair<String, MzTabString> MzTabOptionalColumnEntry
+                String ori = to_string(allOriRT[i]);
+                MzTabString str = MzTabString(ori);
+                MzTabOptionalColumnEntry oRT = make_pair("original_retention_time",str);
+                vector<MzTabOptionalColumnEntry> v;
+                v.push_back (oRT);
+                
+                // writes only one optional column?
+                MzTabString name = MzTabString(allRaws[i]);
+                MzTabOptionalColumnEntry sraw = make_pair("raw_source_file",name);
+                v.push_back (sraw);
+                PepROW.opt_ = v;
+                
+                
+                PepROWS.push_back(PepROW);
+
+              }
+            }
+            
+            mztab.setPeptideSectionRows(PepROWS);
+        }
 MzTabOutputFile.store(out_,mztab);
 }

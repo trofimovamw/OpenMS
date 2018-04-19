@@ -55,6 +55,19 @@ void MetricMap::pushDataSize(String Head,vector<Size> Data)
   }
 }
                //Saves Data with its Head (if Data = numbers). Bsp:(Length,[3,5,3,9,5,...])
+               
+void MetricMap::pushDataFloat(String Head,vector<float> Data)
+{
+  if ( Columnlength_==0 || Columnlength_==Data.size() )
+  {
+    DataStringFloat_.insert(DataStringFloat_.end(),pair<String,vector<float>>(Head,Data));
+    isfilled_ = isfilled_ || true;
+    Columnlength_=Data.size();
+  }
+  else{
+    cout << "MetricMap Error: Wrongly sized Datavector" << '\n';
+  }
+}
 
 vector<pair<String,String>> MetricMap::getHeads()//Returns all Heads. With Type of its Data(Sting/Size). I.e:([Proteins ,String],[Length,Size],[NumberOfProteins,Size],..)
 {
@@ -77,4 +90,9 @@ vector<Size> MetricMap::getSizesByHead(String WantedHead)
 vector<String> MetricMap::getStringsByHead(String WantedHead)
 {
   return DataStrings_[WantedHead];
+}
+
+vector<float> MetricMap::getFloatsByHead(String WantedHead)
+{
+  return DataStringFloat_[WantedHead];
 }

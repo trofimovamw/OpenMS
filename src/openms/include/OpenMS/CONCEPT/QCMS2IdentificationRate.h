@@ -4,12 +4,13 @@
 #include <OpenMS/FORMAT/MzTabFile.h>
 #include <OpenMS/FORMAT/MzTab.h>
 #include <vector>
+#include <utility>
 
 class OPENMS_DLLAPI QCMS2IdentificationRate
 {
-std::vector<std::pair<OpenMS::String,OpenMS::String>> ivec_;
+std::vector<std::pair<OpenMS::String,std::pair<OpenMS::String,OpenMS::String>>> ivec_;
   public:
-    QCMS2IdentificationRate(std::vector<std::pair<OpenMS::String,OpenMS::String>> files):
+    QCMS2IdentificationRate(std::vector<std::pair<OpenMS::String,std::pair<OpenMS::String,OpenMS::String>>> files):
       ivec_(files)
       {
       }

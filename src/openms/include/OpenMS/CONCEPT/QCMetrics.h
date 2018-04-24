@@ -44,6 +44,7 @@
 #include <OpenMS/DATASTRUCTURES/StringListUtils.h>
 #include <OpenMS/METADATA/PeptideIdentification.h>
 #include <OpenMS/FORMAT/CsvFile.h>
+#include <OpenMS/CONCEPT/Exception.h>
 #include <regex>
 
 
@@ -54,7 +55,7 @@
     //  gibt an aus welchem TOPPTOOL die Datei kommt.
 
     public:
-        Metrics(const std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> fvec, const std::vector<std::pair<OpenMS::String,OpenMS::String>> ivec, const std::vector<std::pair<OpenMS::String,OpenMS::CsvFile>> cvecs,const std::vector<std::pair<OpenMS::String,OpenMS::ConsensusMap>> CMapVec, OpenMS::String out):
+        Metrics(const std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> fvec, const std::vector<std::pair<OpenMS::String,std::pair<OpenMS::String,OpenMS::String>>> ivec, const std::vector<std::pair<OpenMS::String,OpenMS::CsvFile>> cvecs,const std::vector<std::pair<OpenMS::String,OpenMS::ConsensusMap>> CMapVec, OpenMS::String out):
         FeatMaps_(fvec),
         Idxml_(ivec),
         CFiles_(cvecs),
@@ -66,7 +67,7 @@
         void runAllMetrics();
       protected:
         const std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> FeatMaps_;			//Alle FeatureXML Datein
-        const std::vector<std::pair<OpenMS::String,OpenMS::String>> Idxml_;	//Peptide der IDXML's
+        const std::vector<std::pair<OpenMS::String,std::pair<OpenMS::String,OpenMS::String>>> Idxml_;	//Peptide der IDXML's
         const std::vector<std::pair<OpenMS::String,OpenMS::CsvFile>> CFiles_;	//Proteine der IDXML's;
         const std::vector<std::pair<OpenMS::String,OpenMS::ConsensusMap>> ConsensusMaps_;    //Alle ConsensusXMLFiles
         OpenMS::String out_;

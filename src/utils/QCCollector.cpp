@@ -35,11 +35,11 @@ protected:
 	{
 	  registerInputFileList_("in_ProteinQuantifier","<files>", StringList(), "Input files",false,false);
 	  registerInputFileList_("in_IDMapper","<files>", StringList(), "Input files",false,false);
-	  registerInputFileList_("in_FalseDiscoveryRate","<files>", StringList(), "Input files",false,false);
+	  registerInputFileList_("in_Post_FalseDiscoveryRate","<files>", StringList(), "Input files",false,false);
 	  registerInputFileList_("in_FeatureLinkerUnlabeledQT","<files>", StringList(), "Input files",false,false);
 	  setValidFormats_("in_ProteinQuantifier", ListUtils::create<String>("csv"));
 	  setValidFormats_("in_IDMapper", ListUtils::create<String>("FeatureXML"));
-	  setValidFormats_("in_FalseDiscoveryRate", ListUtils::create<String>("IdXML"));
+	  setValidFormats_("in_Post_FalseDiscoveryRate", ListUtils::create<String>("IdXML"));
 	  setValidFormats_("in_FeatureLinkerUnlabeledQT", ListUtils::create<String>("consensusXML"));
 	  registerOutputFile_("out", "<file>", "", "Output file (mzTab)", true);
     setValidFormats_("out", ListUtils::create<String>("tsv"));
@@ -49,7 +49,7 @@ protected:
   {
     StringList ins_ProteinQuantifier = getStringList_("in_ProteinQuantifier");
     StringList ins_IDMapper = getStringList_("in_IDMapper");
-    StringList ins_FalseDiscoveryRate = getStringList_("in_FalseDiscoveryRate");
+    StringList ins_Post_FalseDiscoveryRate = getStringList_("in_Post_FalseDiscoveryRate");
     StringList ins_FeatureLinkerUnlabeledQT = getStringList_("in_FeatureLinkerUnlabeledQT");
     String out = getStringOption_("out");
     vector<pair<String,FeatureMap>> fvec;
@@ -75,18 +75,11 @@ protected:
         fvec.push_back(make_pair("IDMapper",features));
 	    }
     }
-    else if (ins_FalseDiscoveryRate.size()!=0)
+    else if (ins_Post_FalseDiscoveryRate.size()!=0)
 		{
-      vector<String> irawfiles;
-      boost::regex rgx("[A-Za-z0-9]+[.]idXML");
-      boost::regex rgx2(".idXML");
-		  for(StringList::const_iterator it=ins_FalseDiscoveryRate.begin();it!=ins_FalseDiscoveryRate.end();++it)
+		  for(StringList::const_iterator it=ins_Post_FalseDiscoveryRate.begin();it!=ins_Post_FalseDiscoveryRate.end();++it)
 			{
-        boost::smatch match;
-        boost::regex_search(*it,match,rgx);
-        String rawfile = boost::regex_replace(match[0].str(),rgx2,".mzML");
-			  ivec.push_back(make_pair("FalseDiscoveryRate",*it));
-        irawfiles.push_back(rawfile);
+			  ivec.push_back(make_pair("Post_FalseDiscoveryRate",*it));
 		  }
 	  }
     else if(ins_FeatureLinkerUnlabeledQT.size()!=0)

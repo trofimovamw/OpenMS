@@ -8,9 +8,8 @@
 #include <OpenMS/METADATA/PeptideIdentification.h>
 #include <OpenMS/FORMAT/CsvFile.h>
 #include <OpenMS/CONCEPT/QCMetrics.h>
-#include <OpenMS/CONCEPT/QCMetricMap.h>
 #include <OpenMS/CONCEPT/QCProteinAndPeptideCount.h>
-//#include <OpenMS/CONCEPT/QCMBRalignment.h>
+#include <OpenMS/CONCEPT/QCMS2IdentificationRate.h>
 #include <vector>
 #include <utility>
 
@@ -21,66 +20,21 @@ Metrics::~Metrics()
  {
 
  }
-
 //Wenn ihr die Metriken schreibt lasst euch bitte ein Int ausgeben 1 wenn erfolgreich, 0  wenn nicht
 //Die Daten die ihr erhaltet am besten als MetricMap, die wichtigen Funktionen dafür stehen oben
 void Metrics::runAllMetrics()
 {
-////////////////Metric1: Protein And Peptide Count /////////////////////////////////
-QCProteinAndPeptideCount papc(CFiles_);
-MetricMap PeptideCountData;
-MetricMap ProteinCountData;
-int PAPC_Success = papc.ProtAndPepCount(PeptideCountData,ProteinCountData);
-////////////////Metric2: MBR alignment /////////////////////////////////////////////
-/*QCMBRalignment MBR(FeatMaps_);
-MetricMap MBR_Raws;
-MetricMap MBR_Seqs;
-MetricMap MBR_CorrectedRT;
-MetricMap MBR_OriginalRT;
-MetricMap MBR_Spectra;
-int MBR_Success = MBR.MBRAlignment(MBR_Raws,MBR_Seqs,MBR_CorrectedRT,MBR_CorrectedRT,MBR_OriginalRT,MBR_Spectra);*/
+////////////////Metrik1: Protein And Peptide Count /////////////////////////////////
+MzTabFile mzTabOutputFile;
+MzTab mzTabOutput;
+QCProteinAndPeptideCount ProtAndPepObj(CFiles_);
+int papc = ProtAndPepObj.ProtAndPepCount( mzTabOutput);
+//QCMS2IdentificationRate MS2IDRate(Idxml_);
+//int mid = MS2IDRate.MS2IDRateidentifier_( mzTabOutput);
+mzTabOutputFile.store(out_,mzTabOutput);
+}
+
+////////////////Metrik2: ....................../////////////////////////////////////
 ////////////////Metrik3: ....................../////////////////////////////////////
 ////////////////Metrik4: ....................../////////////////////////////////////
 ////////////////Metrik5: ....................../////////////////////////////////////
-
-//MzTab Writer:
-MzTabFile MzTabOutputFile;
-MzTab mztab;
-if(PAPC_Success == 1 || MBR_Success == 1)
-{
-    if(MBR_Success == 0)
-    {
-    int numOfPeptides = PeptideCountData.size();
-    int numOfProteins = ProteinCountData.size();
-    vector<String> empty;
-    vector<String> allPeptides = numOfPeptides > 0 ? PeptideCountData.getStringsByHead("peptide") : empty;
-    vector<String> allProteins = numOfProteins > 0 ? ProteinCountData.getStringsByHead("protein") : empty;
-    MzTabPeptideSectionRows PepROWS;
-    MzTabProteinSectionRows ProtROWS;
-    if (numOfPeptides > 0)
-    {
-      for( int i = 0; i < numOfPeptides ; i++ )
-      {
-        MzTabPeptideSectionRow PepROW;
-        MzTabString PepSeq;
-        PepSeq.set(allPeptides[i]);
-        PepROW.sequence = PepSeq;
-        PepROWS.push_back(PepROW);
-      }
-    }
-    if( numOfProteins > 0 ){
-      for (int i = 0; i < numOfProteins ; i++)
-      {
-        MzTabProteinSectionRow ProtROW;
-        MzTabString ProtSeq;
-        ProtSeq.set(allProteins[i]);
-        ProtROW.description = ProtSeq;
-        ProtROWS.push_back(ProtROW);
-      }
-    }
-    mztab.setPeptideSectionRows(PepROWS);
-    mztab.setProteinSectionRows(ProtROWS);
-  }
-}
-MzTabOutputFile.store(out_,mztab);
-}

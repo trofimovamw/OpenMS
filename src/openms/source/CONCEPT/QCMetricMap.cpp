@@ -76,7 +76,7 @@ vector<pair<String,String>> MetricMap::getHeads()//Returns all Heads. With Type 
   for ( map<String,vector<Size>>::const_iterator it = DataStringNum_.begin() ; it != DataStringNum_.end() ; it++ )
   {
       output.push_back( pair<String,String>(it->first,"Size"));
-  } 
+  }
   for (map<String,vector<float>>::const_iterator it = DataStringFloat_.begin() ; it != DataStringFloat_.end() ; it ++)
   {
       output.push_back(pair<String,String>(it->first,"Float"));

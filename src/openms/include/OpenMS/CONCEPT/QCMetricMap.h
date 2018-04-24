@@ -1,5 +1,6 @@
-#ifndef OPENMS_CONCEPT_QCMETRICMAP_H
-#define OPENMS_CONCEPT_QCMETRICMAP_H
+//#ifndef OPENMS_CONCEPT_QCMETRICMAP_H
+//#define OPENMS_CONCEPT_QCMETRICMAP_H
+#pragma once
 #include<OpenMS/KERNEL/StandardTypes.h>
 #include<vector>
 

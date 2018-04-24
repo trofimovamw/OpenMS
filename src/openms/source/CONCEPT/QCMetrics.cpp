@@ -10,6 +10,7 @@
 #include <OpenMS/CONCEPT/QCMetrics.h>
 #include <OpenMS/CONCEPT/QCMetricMap.h>
 #include <OpenMS/CONCEPT/QCProteinAndPeptideCount.h>
+//#include <OpenMS/CONCEPT/QCMBRalignment.h>
 #include <vector>
 #include <utility>
 
@@ -25,11 +26,19 @@ Metrics::~Metrics()
 //Die Daten die ihr erhaltet am besten als MetricMap, die wichtigen Funktionen dafür stehen oben
 void Metrics::runAllMetrics()
 {
-////////////////Metrik1: Protein And Peptide Count /////////////////////////////////
+////////////////Metric1: Protein And Peptide Count /////////////////////////////////
 QCProteinAndPeptideCount papc(CFiles_);
 MetricMap PeptideCountData;
 MetricMap ProteinCountData;
-int a = papc.ProtAndPepCount(PeptideCountData,ProteinCountData);
+int PAPC_Success = papc.ProtAndPepCount(PeptideCountData,ProteinCountData);
+////////////////Metric2: MBR alignment /////////////////////////////////////////////
+/*QCMBRalignment MBR(FeatMaps_);
+MetricMap MBR_Raws;
+MetricMap MBR_Seqs;
+MetricMap MBR_CorrectedRT;
+MetricMap MBR_OriginalRT;
+MetricMap MBR_Spectra;
+int MBR_Success = MBR.MBRAlignment(MBR_Raws,MBR_Seqs,MBR_CorrectedRT,MBR_CorrectedRT,MBR_OriginalRT,MBR_Spectra);*/
 ////////////////Metrik3: ....................../////////////////////////////////////
 ////////////////Metrik4: ....................../////////////////////////////////////
 ////////////////Metrik5: ....................../////////////////////////////////////
@@ -37,8 +46,10 @@ int a = papc.ProtAndPepCount(PeptideCountData,ProteinCountData);
 //MzTab Writer:
 MzTabFile MzTabOutputFile;
 MzTab mztab;
-if(a == 1)
+if(PAPC_Success == 1 || MBR_Success == 1)
 {
+    if(MBR_Success == 0)
+    {
     int numOfPeptides = PeptideCountData.size();
     int numOfProteins = ProteinCountData.size();
     vector<String> empty;
@@ -69,6 +80,7 @@ if(a == 1)
     }
     mztab.setPeptideSectionRows(PepROWS);
     mztab.setProteinSectionRows(ProtROWS);
+  }
 }
 MzTabOutputFile.store(out_,mztab);
 }

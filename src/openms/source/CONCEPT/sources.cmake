@@ -12,12 +12,8 @@ LogConfigHandler.cpp
 LogStream.cpp
 PrecisionWrapper.cpp
 ProgressLogger.cpp
-<<<<<<< HEAD
 QCProteinAndPeptideCount.cpp
 QCMBRalignment.cpp
-QCMetricMap.cpp
-=======
->>>>>>> 7a8319e38d6109532eaae5445913d2cca64bbee6
 QCMetrics.cpp
 QCMS2IdentificationRate.cpp
 QCProteinAndPeptideCount.cpp

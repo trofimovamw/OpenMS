@@ -9,10 +9,8 @@ class OPENMS_DLLAPI QCMBRalignment
 {
 std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> feat_map_;
   public:
-    QCMBRalignment(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files):
-      feat_map_(files)
-      {
-      };
+    //QCMBRalignment(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files);
+    QCMBRalignment(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files);
     ~QCMBRalignment();
     int MBRAlignment(OpenMS::MzTab&) const; //std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> FeatMaps_
   

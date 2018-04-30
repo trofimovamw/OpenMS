@@ -60,26 +60,29 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
   vector<FeatureMap> maps;
   MzTabPeptideSectionRows rows;
   MzTabPeptideSectionRows mztabRows = mztab.getPeptideSectionRows();
-  int featureCount = 0;
+  int pepIDCount = 0;
   
   for(vector<pair<String,FeatureMap>>::const_iterator it = feat_map_.begin();it!=feat_map_.end();++it)
   {
     maps.push_back (it->second);
-  } 
-        
-  for (vector<FeatureMap>::const_iterator m_it = maps.begin(); m_it!=maps.end();m_it++) 
-  {
+  }
+   
+  for (unsigned long m = 0; m < maps.size(); m++)
+  {     
+  
+    String rfile;
+    //Keep index of current map for spectra reference 
+    Size run = m; 
     
-    String rfile;  
-    if (m_it->metaValueExists("spectra_data")) 
+    if (maps[m].metaValueExists("spectra_data")) 
     {		
-      StringList rfiles = m_it->getMetaValue("spectra_data");	
+      StringList rfiles = maps[m].getMetaValue("spectra_data");	
       rfile = rfiles[0];
     } 
     
-    for (vector<Feature>::const_iterator f_it = m_it->begin(); f_it!=m_it->end();f_it++) 
+    for (vector<Feature>::const_iterator f_it = maps[m].begin(); f_it!=maps[m].end();f_it++)
     {
-      featureCount++;		
+
       vector<PeptideIdentification> pep_id = f_it->getPeptideIdentifications();	
  		  
       if (pep_id.empty()) 
@@ -92,19 +95,23 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
       {
         //Iterate over peptide hits of a feature and write data into mztab
         //In case of 2 and more hits take the first one 
-        //Spectrum reference problem unsolved!
  	    for (vector<PeptideIdentification>::iterator p_it = pep_id.begin(); p_it!=pep_id.end(); p_it++) 
  	    {
+ 	      pepIDCount++;
  	      MzTabPeptideSectionRow row;
  	      MzTabString PepSeq;
+ 	      MzTabInteger charge;
           MzTabDouble correctRT;
           MzTabDouble oriRT;
  		  
  		  //Set sequence	
           vector<PeptideHit> hits = p_it->getHits(); 
           PeptideHit hit = hits[0];
-          AASequence seq = hit.getSequence(); //falls leer??
+          AASequence seq = hit.getSequence();
+          int ch = hit.getCharge();
           PepSeq.set(seq.toString());
+          charge.set(ch);
+          row.charge = charge;
           row.sequence = PepSeq;
           
           //Set corrected RTs 
@@ -121,8 +128,15 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
  	      else {throw "Retention time was not written in the feature.";}
  	      
  	      //Set spectrum reference
-    	  String spectrum_ref = p_it->getMetaValue("spectrum_reference");  //"spectrum=3462"
-    	  
+    	  String spectrum_ref = p_it->getMetaValue("spectrum_reference");
+    	  const String& const_spec = spectrum_ref;
+    	  MzTabSpectraRef spec_ref;
+    	  Size index = run+1;
+    	  spec_ref.setMSFile(index);
+    	  spec_ref.setSpecRef(spectrum_ref);
+    	  spec_ref.setSpecRefFile(const_spec);
+    	  row.spectra_ref = spec_ref;
+    	      	  
     	  //Set optional columns: original RT and source file
     	  String ori = to_string(orRT);
           MzTabString str = MzTabString(ori);
@@ -145,21 +159,25 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
   }
   
   //If peptide section was written from features before: append columns
-  if (featureCount==mztabRows.size()) 
+  if (pepIDCount==mztabRows.size()) 
   {
     for (unsigned i = 0; i < mztabRows.size(); i++)
     {
       MzTabPeptideSectionRow mz_r = mztabRows[i];
       MzTabPeptideSectionRow r = rows[i];
+      MzTabInteger ch = r.charge;
+      MzTabSpectraRef spectre = r.spectra_ref;
       MzTabDoubleList correctRT = r.retention_time;
       vector<MzTabOptionalColumnEntry> v = r.opt_;
       mz_r.retention_time = correctRT;
+      mz_r.charge = ch;
       vector<MzTabOptionalColumnEntry> mz_v = mz_r.opt_;
       for(unsigned j = 0; j < v.size(); j++)
       {
         mz_v.push_back(v[j]);
       }
       mz_r.opt_ = mz_v;
+      mz_r.spectra_ref = spectre;
       mztabRows[i] = mz_r;
     }
     mztab.setPeptideSectionRows(mztabRows);

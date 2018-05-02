@@ -100,7 +100,6 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
  	      pepIDCount++;
  	      MzTabPeptideSectionRow row;
  	      MzTabString PepSeq;
- 	      //MzTabInteger charge;
           MzTabDouble correctRT;
           MzTabDouble oriRT;
  		  
@@ -108,10 +107,7 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
           vector<PeptideHit> hits = p_it->getHits(); 
           PeptideHit hit = hits[0];
           AASequence seq = hit.getSequence();
-          //int ch = hit.getCharge();
           PepSeq.set(seq.toString());
-          //charge.set(ch);
-          //row.charge = charge;
           row.sequence = PepSeq;
           
           //Set corrected RTs 
@@ -165,12 +161,10 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
     {
       MzTabPeptideSectionRow mz_r = mztabRows[i];
       MzTabPeptideSectionRow r = rows[i];
-      //MzTabInteger ch = r.charge;
       MzTabSpectraRef spectre = r.spectra_ref;
       MzTabDoubleList correctRT = r.retention_time;
       vector<MzTabOptionalColumnEntry> v = r.opt_;
       mz_r.retention_time = correctRT;
-      //mz_r.charge = ch;
       vector<MzTabOptionalColumnEntry> mz_v = mz_r.opt_;
       for(unsigned j = 0; j < v.size(); j++)
       {

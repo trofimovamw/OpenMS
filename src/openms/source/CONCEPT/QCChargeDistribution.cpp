@@ -56,12 +56,11 @@ QCChargeDistribution::QCChargeDistribution(std::vector<std::pair<OpenMS::String,
 //Main method to write mztab peptide section data needed for charge distribution plot (PTXQC)
 int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
 {
-
   vector<FeatureMap> maps;
   MzTabPeptideSectionRows rows;
   MzTabPeptideSectionRows mztabRows = mztab.getPeptideSectionRows();
   int pepIDCount = 0;
-  
+
   for(vector<pair<String,FeatureMap>>::const_iterator it = feat_map_.begin();it!=feat_map_.end();++it)
   {
     maps.push_back (it->second);

@@ -33,7 +33,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/KERNEL/StandardTypes.h>
-#include <OpenMS/CONCEPT/QCMBRalignment.h>
+#include <OpenMS/CONCEPT/QCChargeDistribution.h>
 #include <OpenMS/METADATA/PeptideIdentification.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
 
@@ -41,20 +41,20 @@ using namespace OpenMS;
 using namespace std;
 
 //Destructor
-QCMBRalignment::~QCMBRalignment()
+QCChargeDistribution::~QCChargeDistribution()
 {
 
 }
 
 //Constructor
-QCMBRalignment::QCMBRalignment(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files):
+QCChargeDistribution::QCChargeDistribution(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files):
   feat_map_(files)
   {
       
   };
   
-//Main method to write mztab peptide section data needed for MBR alignment plot (PTXQC)
-int QCMBRalignment::MBRAlignment(MzTab& mztab) const
+//Main method to write mztab peptide section data needed for charge distribution plot (PTXQC)
+int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
 {
 
   vector<FeatureMap> maps;
@@ -71,8 +71,6 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
   {     
   
     String rfile;
-    //Keep index of current map for spectra reference 
-    Size run = m; 
     
     if (maps[m].metaValueExists("spectra_data")) 
     {		
@@ -87,63 +85,30 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
  		  
       if (pep_id.empty()) 
       {
-        //If we want to write empty lines peptide_data_ for features with retention times
-        //	
+        //Empty lines peptide_data_ for features with retention times	
       }
  				
       else 
       {
-        //Iterate over peptide hits of a feature and write data into mztab
-        //In case of 2 and more hits take the first one 
  	    for (vector<PeptideIdentification>::iterator p_it = pep_id.begin(); p_it!=pep_id.end(); p_it++) 
  	    {
  	      pepIDCount++;
  	      MzTabPeptideSectionRow row;
  	      MzTabString PepSeq;
- 	      //MzTabInteger charge;
-          MzTabDouble correctRT;
-          MzTabDouble oriRT;
+ 	      MzTabInteger charge;
  		  
- 		  //Set sequence	
+ 		  //Set sequence and charge	
           vector<PeptideHit> hits = p_it->getHits(); 
           PeptideHit hit = hits[0];
           AASequence seq = hit.getSequence();
-          //int ch = hit.getCharge();
+          int ch = hit.getCharge();
           PepSeq.set(seq.toString());
-          //charge.set(ch);
-          //row.charge = charge;
+          charge.set(ch);
+          row.charge = charge;
           row.sequence = PepSeq;
           
-          //Set corrected RTs 
-          float corrRT = f_it->getRT(); 
-          correctRT.set(corrRT);
-          vector<MzTabDouble> cRTs;
-          cRTs.push_back (correctRT);
-          MzTabDoubleList listC;
-          listC.set(cRTs);
-          row.retention_time = listC;
-          
-    	  float orRT;
-    	  if (p_it->metaValueExists("original_RT")) {orRT = p_it->getMetaValue("original_RT");}
- 	      else {throw "Retention time was not written in the feature.";}
- 	      
- 	      //Set spectrum reference
-    	  String spectrum_ref = p_it->getMetaValue("spectrum_reference");
-    	  const String& const_spec = spectrum_ref;
-    	  MzTabSpectraRef spec_ref;
-    	  Size index = run+1;
-    	  spec_ref.setMSFile(index);
-    	  spec_ref.setSpecRef(spectrum_ref);
-    	  spec_ref.setSpecRefFile(const_spec);
-    	  row.spectra_ref = spec_ref;
-    	      	  
     	  //Set optional columns: original RT and source file
-    	  String ori = to_string(orRT);
-          MzTabString str = MzTabString(ori);
-          MzTabOptionalColumnEntry oRT = make_pair("original_retention_time",str);
-          vector<MzTabOptionalColumnEntry> v;
-          v.push_back (oRT);
-                
+          vector<MzTabOptionalColumnEntry> v;                
           MzTabString name = MzTabString(rfile);
           MzTabOptionalColumnEntry sraw = make_pair("raw_source_file",name);
           v.push_back (sraw);
@@ -165,19 +130,15 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
     {
       MzTabPeptideSectionRow mz_r = mztabRows[i];
       MzTabPeptideSectionRow r = rows[i];
-      //MzTabInteger ch = r.charge;
-      MzTabSpectraRef spectre = r.spectra_ref;
-      MzTabDoubleList correctRT = r.retention_time;
+      MzTabInteger ch = r.charge;
       vector<MzTabOptionalColumnEntry> v = r.opt_;
-      mz_r.retention_time = correctRT;
-      //mz_r.charge = ch;
+      mz_r.charge = ch;
       vector<MzTabOptionalColumnEntry> mz_v = mz_r.opt_;
       for(unsigned j = 0; j < v.size(); j++)
       {
         mz_v.push_back(v[j]);
       }
       mz_r.opt_ = mz_v;
-      mz_r.spectra_ref = spectre;
       mztabRows[i] = mz_r;
     }
     mztab.setPeptideSectionRows(mztabRows);

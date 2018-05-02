@@ -14,6 +14,7 @@ PrecisionWrapper.cpp
 ProgressLogger.cpp
 QCProteinAndPeptideCount.cpp
 QCMBRalignment.cpp
+QCChargeDistribution.cpp
 QCMetrics.cpp
 QCMS2IdentificationRate.cpp
 QCProteinAndPeptideCount.cpp

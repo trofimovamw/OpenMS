@@ -11,6 +11,7 @@
 #include <OpenMS/CONCEPT/QCProteinAndPeptideCount.h>
 #include <OpenMS/CONCEPT/QCMS2IdentificationRate.h>
 #include <OpenMS/CONCEPT/QCMBRalignment.h>
+#include <OpenMS/CONCEPT/QCChargeDistribution.h>
 #include <vector>
 #include <utility>
 
@@ -35,7 +36,11 @@ int papc = ProtAndPepObj.ProtAndPepCount( mzTabOutput);
 
 QCMBRalignment MBRAlign(FeatMapsMBR_);
 int mbra = MBRAlign.MBRAlignment( mzTabOutput);
+
+QCChargeDistribution QCCharge(FeatMapsMBR_);
+int cd = QCCharge.ChargeDistribution( mzTabOutput);
 mzTabOutputFile.store(out_,mzTabOutput);
+
 }
 
 ////////////////Metrik2: ....................../////////////////////////////////////

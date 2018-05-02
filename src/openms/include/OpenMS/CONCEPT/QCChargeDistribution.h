@@ -38,16 +38,16 @@
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <vector>
 
-class OPENMS_DLLAPI QCMBRalignment
+class OPENMS_DLLAPI QCChargeDistribution
 {
 std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> feat_map_;
   public:
     //Constructor
-    QCMBRalignment(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files);
+    QCChargeDistribution(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files);
     //Destructor
-    ~QCMBRalignment();
+    ~QCChargeDistribution();
     
-    int MBRAlignment(OpenMS::MzTab&) const;
+    int ChargeDistribution(OpenMS::MzTab&) const;
   
 };
 

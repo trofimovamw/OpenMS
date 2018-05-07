@@ -140,12 +140,12 @@ int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
     }
   }
   //Merge new lines and existing lines. Based on unique ids (UniqueIdInterface)
-  //If PSM section was written from features before: append columns
+  //If PSM section was not written from features before: append rows
   if (ids_.empty()) 
   {
     mztab.setPSMSectionRows(rows); //PSM
   }
-  //Else: append rows
+  //Else: append columns
   //If unique ids are equal: append column (charge)
   //If not: insert unique id in dictionary and add new line to mztab
   else

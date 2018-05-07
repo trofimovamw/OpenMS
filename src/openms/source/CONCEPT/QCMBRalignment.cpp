@@ -172,7 +172,7 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
   cout<< ids_.size() << endl;
   cout << unique_ids_.size() << endl; 
   //Merge new lines and existing lines. Based on unique ids (UniqueIdInterface)
-  //If PSM section was not written before: append columns
+  //If PSM section was not written before: append rows
   
   if (ids_.empty()) 
   {

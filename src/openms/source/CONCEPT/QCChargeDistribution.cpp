@@ -47,8 +47,8 @@ QCChargeDistribution::~QCChargeDistribution()
 }
 
 //Constructor
-QCChargeDistribution::QCChargeDistribution(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files):
-  feat_map_(files)
+QCChargeDistribution::QCChargeDistribution(std::vector<OpenMS::FeatureMap> files):
+  maps(files)
   {
       
   };
@@ -56,15 +56,12 @@ QCChargeDistribution::QCChargeDistribution(std::vector<std::pair<OpenMS::String,
 //Main method to write mztab peptide section data needed for charge distribution plot (PTXQC)
 int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
 {
-  vector<FeatureMap> maps;
-  MzTabPeptideSectionRows rows;
-  MzTabPeptideSectionRows mztabRows = mztab.getPeptideSectionRows();
-  int pepIDCount = 0;
+  MzTabPSMSectionRows rows;
+  MzTabPSMSectionRows mztabRows = mztab.getPSMSectionRows();
+  vector<MzTabString> unique_ids_;
 
-  for(vector<pair<String,FeatureMap>>::const_iterator it = feat_map_.begin();it!=feat_map_.end();++it)
-  {
-    maps.push_back (it->second);
-  }
+  int pepIDCount = 0;
+  int featCount = 0;
    
   for (unsigned long m = 0; m < maps.size(); m++)
   {     
@@ -84,7 +81,17 @@ int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
  		  
       if (pep_id.empty()) 
       {
-        //Empty lines peptide_data_ for features with retention times	
+        //Empty lines of psm_data_ for features with ion charge	
+        MzTabPSMSectionRow row;
+        MzTabInteger charge;
+        int ch = f_it->getCharge();
+        charge.set(ch);
+        row.charge = charge;
+        rows.push_back (row);
+        UInt64 id = f_it->getUniqueId();
+        unique_ids_.push_back (MzTabString(id));
+        featCount++;
+        
       }
  				
       else 
@@ -92,28 +99,26 @@ int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
  	    for (vector<PeptideIdentification>::iterator p_it = pep_id.begin(); p_it!=pep_id.end(); p_it++) 
  	    {
  	      pepIDCount++;
- 	      MzTabPeptideSectionRow row;
- 	      MzTabString PepSeq;
+ 	      MzTabPSMSectionRow row;
  	      MzTabInteger charge;
  		  
- 		  //Set sequence and charge	
-          vector<PeptideHit> hits = p_it->getHits(); 
-          PeptideHit hit = hits[0];
-          AASequence seq = hit.getSequence();
-          int ch = hit.getCharge();
-          PepSeq.set(seq.toString());
+ 		  //Set charge and raw file
+          int ch = f_it->getCharge();
           charge.set(ch);
           row.charge = charge;
-          row.sequence = PepSeq;
           
-    	  //Set optional columns: original RT and source file
-          vector<MzTabOptionalColumnEntry> v;                
+          vector<MzTabOptionalColumnEntry> v;  
           MzTabString name = MzTabString(rfile);
-          MzTabOptionalColumnEntry sraw = make_pair("raw_source_file",name);
+          MzTabOptionalColumnEntry sraw = make_pair("opt_raw_source_file",name);
           v.push_back (sraw);
+          UInt64 id = f_it->getUniqueId();
+          MzTabOptionalColumnEntry u_id = make_pair("opt_unique_id",MzTabString(id));
+          v.push_back (u_id);
+          unique_ids_.push_back (MzTabString(id));
           row.opt_ = v;
-                
+          
           rows.push_back(row);
+
     	  		
          }   
  	  }
@@ -121,35 +126,75 @@ int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
  	}			
     		
   }
-  
-  //If peptide section was written from features before: append columns
-  if (pepIDCount==mztabRows.size()) 
-  {
-    for (unsigned i = 0; i < mztabRows.size(); i++)
+  //Write unique ids from existing mztab data structure passed to the constructor
+  vector<MzTabString> ids_;
+  for(vector<MzTabPSMSectionRow>::const_iterator it = mztabRows.begin();it!=mztabRows.end();++it) 
+  { 
+    vector<MzTabOptionalColumnEntry> opt = it->opt_;
+    for (vector<MzTabOptionalColumnEntry>::const_iterator o_it = opt.begin();o_it!=opt.end();++o_it)
     {
-      MzTabPeptideSectionRow mz_r = mztabRows[i];
-      MzTabPeptideSectionRow r = rows[i];
-      MzTabInteger ch = r.charge;
-      vector<MzTabOptionalColumnEntry> v = r.opt_;
-      mz_r.charge = ch;
-      vector<MzTabOptionalColumnEntry> mz_v = mz_r.opt_;
-      for(unsigned j = 0; j < v.size(); j++)
-      {
-        mz_v.push_back(v[j]);
-      }
-      mz_r.opt_ = mz_v;
-      mztabRows[i] = mz_r;
+      if(o_it->first=="unique_id")
+        {
+          ids_.push_back(o_it->second);
+        }
     }
-    mztab.setPeptideSectionRows(mztabRows);
+  }
+  //Merge new lines and existing lines. Based on unique ids (UniqueIdInterface)
+  //If PSM section was written from features before: append columns
+  if (ids_.empty()) 
+  {
+    mztab.setPSMSectionRows(rows); //PSM
   }
   //Else: append rows
+  //If unique ids are equal: append column (charge)
+  //If not: insert unique id in dictionary and add new line to mztab
   else
-  {
-    for (unsigned i = 0; i < rows.size(); i++)
+  {  
+    //Assign vectors for accurate merging
+    vector<MzTabString> ids;
+    vector<MzTabString> unique_ids;
+    if (ids_.size() < unique_ids_.size())
     {
-      mztabRows.push_back(rows[i]);
+      ids = ids_;
+      unique_ids = unique_ids_;   
+    } 
+    else 
+    {
+      ids = unique_ids_;
+      unique_ids = ids_;
     }
-    mztab.setPeptideSectionRows(mztabRows);  
+    for (unsigned i = 0; i < unique_ids.size(); i++)
+    {
+      if (ids[i].toCellString().compare(unique_ids[i].toCellString())==0)
+      {
+        MzTabPSMSectionRow mz_r = mztabRows[i];
+        MzTabPSMSectionRow r = rows[i];
+        MzTabInteger charge = r.charge;
+        mz_r.charge = charge;
+        mztabRows[i] = mz_r;
+        
+      }
+      else 
+      {
+        MzTabPSMSectionRows split_f (mztabRows.begin(), mztabRows.begin()+i);
+        MzTabPSMSectionRows split_e (mztabRows.begin()+i, mztabRows.end());
+        split_f.push_back (rows[i]);
+        for (unsigned t = 0; t < split_e.size(); t++)
+        {
+          split_f.push_back (split_e[t]);
+        }
+        mztabRows = split_f;
+        vector<MzTabString> id_f (ids.begin(), ids.begin()+i);
+        vector<MzTabString> id_e (ids.begin()+i, ids.end());
+        id_f.push_back (unique_ids[i]);
+        for (unsigned t = 0; t < id_e.size(); t++)
+        {
+          id_f.push_back (id_e[t]);
+        }
+        ids = id_f;
+      }
+    }
+    mztab.setPSMSectionRows(mztabRows);  
   }  
   
   return rows.size()!=0 ? 1:0;

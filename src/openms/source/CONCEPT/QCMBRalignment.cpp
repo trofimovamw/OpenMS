@@ -47,8 +47,8 @@ QCMBRalignment::~QCMBRalignment()
 }
 
 //Constructor
-QCMBRalignment::QCMBRalignment(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files):
-  feat_map_(files)
+QCMBRalignment::QCMBRalignment(std::vector<OpenMS::FeatureMap> files):
+  maps(files)
   {
       
   };
@@ -57,17 +57,15 @@ QCMBRalignment::QCMBRalignment(std::vector<std::pair<OpenMS::String,OpenMS::Feat
 int QCMBRalignment::MBRAlignment(MzTab& mztab) const
 {
 
-  vector<FeatureMap> maps;
-  MzTabPeptideSectionRows rows;
-  MzTabPeptideSectionRows mztabRows = mztab.getPeptideSectionRows();
+  //vector<FeatureMap> maps;
+  MzTabPSMSectionRows rows;
+  MzTabPSMSectionRows mztabRows = mztab.getPSMSectionRows();
+  vector<MzTabString> unique_ids_;
   int pepIDCount = 0;
   
-  for(vector<pair<String,FeatureMap>>::const_iterator it = feat_map_.begin();it!=feat_map_.end();++it)
-  {
-    maps.push_back (it->second);
-  }
+  //maps = feat_map_;
    
-  for (unsigned long m = 0; m < maps.size(); m++)
+  for (Size m = 0; m < maps.size(); m++)
   {     
   
     String rfile;
@@ -83,7 +81,9 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
     for (vector<Feature>::const_iterator f_it = maps[m].begin(); f_it!=maps[m].end();f_it++)
     {
 
-      vector<PeptideIdentification> pep_id = f_it->getPeptideIdentifications();	
+      vector<PeptideIdentification> pep_id = f_it->getPeptideIdentifications();
+      UInt64 unique_id = f_it->getUniqueId();
+      cout << unique_id << endl;	
  		  
       if (pep_id.empty()) 
       {
@@ -98,7 +98,7 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
  	    for (vector<PeptideIdentification>::iterator p_it = pep_id.begin(); p_it!=pep_id.end(); p_it++) 
  	    {
  	      pepIDCount++;
- 	      MzTabPeptideSectionRow row;
+ 	      MzTabPSMSectionRow row;
  	      MzTabString PepSeq;
           MzTabDouble correctRT;
           MzTabDouble oriRT;
@@ -135,13 +135,16 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
     	      	  
     	  //Set optional columns: original RT and source file
     	  String ori = to_string(orRT);
-          MzTabString str = MzTabString(ori);
-          MzTabOptionalColumnEntry oRT = make_pair("original_retention_time",str);
+          MzTabOptionalColumnEntry oRT = make_pair("original_retention_time",MzTabString(ori));
           vector<MzTabOptionalColumnEntry> v;
           v.push_back (oRT);
+          
+          UInt64 id = f_it->getUniqueId();
+          MzTabOptionalColumnEntry u_id = make_pair("unique_id",MzTabString(id));
+          v.push_back (u_id);
+          unique_ids_.push_back (MzTabString(id));
                 
-          MzTabString name = MzTabString(rfile);
-          MzTabOptionalColumnEntry sraw = make_pair("raw_source_file",name);
+          MzTabOptionalColumnEntry sraw = make_pair("raw_source_file",MzTabString(rfile));
           v.push_back (sraw);
           row.opt_ = v;
                 
@@ -153,38 +156,90 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
  	}			
     		
   }
-  
-  //If peptide section was written from features before: append columns
-  if (pepIDCount==mztabRows.size()) 
-  {
-    for (unsigned i = 0; i < mztabRows.size(); i++)
+  //Write unique ids from existing mztab data structure passed to the constructor
+  vector<MzTabString> ids_;
+  for(vector<MzTabPSMSectionRow>::const_iterator it = mztabRows.begin();it!=mztabRows.end();++it) 
+  { 
+    vector<MzTabOptionalColumnEntry> opt = it->opt_;
+    for (vector<MzTabOptionalColumnEntry>::const_iterator o_it = opt.begin();o_it!=opt.end();++o_it)
     {
-      MzTabPeptideSectionRow mz_r = mztabRows[i];
-      MzTabPeptideSectionRow r = rows[i];
-      MzTabSpectraRef spectre = r.spectra_ref;
-      MzTabDoubleList correctRT = r.retention_time;
-      vector<MzTabOptionalColumnEntry> v = r.opt_;
-      mz_r.retention_time = correctRT;
-      vector<MzTabOptionalColumnEntry> mz_v = mz_r.opt_;
-      for(unsigned j = 0; j < v.size(); j++)
-      {
-        mz_v.push_back(v[j]);
-      }
-      mz_r.opt_ = mz_v;
-      mz_r.spectra_ref = spectre;
-      mztabRows[i] = mz_r;
+      if(o_it->first=="unique_id")
+        {
+          ids_.push_back(o_it->second);
+        }
     }
-    mztab.setPeptideSectionRows(mztabRows);
+  }
+  cout<< ids_.size() << endl;
+  cout << unique_ids_.size() << endl; 
+  //Merge new lines and existing lines. Based on unique ids (UniqueIdInterface)
+  //If PSM section was not written before: append columns
+  
+  if (ids_.empty()) 
+  {
+    mztab.setPSMSectionRows(rows); 
   }
   //Else: append rows
+  //If unique ids are equal: append columns (relevant for metric)
+  //If not: insert unique id in dictionary and add new line to mztab
   else
-  {
-    for (unsigned i = 0; i < rows.size(); i++)
+  { 
+    //Assign vectors for accurate merging
+    vector<MzTabString> ids;
+    vector<MzTabString> unique_ids;
+    if (ids_.size() < unique_ids_.size())
     {
-      mztabRows.push_back(rows[i]);
+      ids = ids_;
+      unique_ids = unique_ids_;   
+    } 
+    else 
+    {
+      ids = unique_ids_;
+      unique_ids = ids_;
     }
-    mztab.setPeptideSectionRows(mztabRows);  
-  }  
+    
+    for (unsigned i = 0; i < unique_ids.size(); i++)
+    {
+      if (ids[i].toCellString().compare(unique_ids[i].toCellString())==0)
+      {
+        MzTabPSMSectionRow mz_r = mztabRows[i];
+        MzTabPSMSectionRow r = rows[i];
+        MzTabString seq = r.sequence;
+        mz_r.sequence = seq;
+        mz_r.retention_time = r.retention_time;
+        mz_r.spectra_ref = r.spectra_ref;
+        vector<MzTabOptionalColumnEntry> v = mz_r.opt_;
+        for (Size i = 0; i < r.opt_.size(); i++)
+        {
+          v.push_back (r.opt_[i]);
+        }
+        mz_r.opt_ = v;
+        mztabRows[i] = mz_r;
+        
+      }
+      else 
+      {
+        
+        MzTabPSMSectionRows split_f (mztabRows.begin(), mztabRows.begin()+i);
+        MzTabPSMSectionRows split_e (mztabRows.begin()+i, mztabRows.end());
+        split_f.push_back (rows[i]);
+        for (unsigned t = 0; t < split_e.size(); t++)
+        {
+          split_f.push_back (split_e[t]);
+        }
+        mztabRows = split_f;
+        vector<MzTabString> id_f (ids.begin(), ids.begin()+i);
+        vector<MzTabString> id_e (ids.begin()+i, ids.end());
+        id_f.push_back (unique_ids[i]);
+        for (unsigned t = 0; t < id_e.size(); t++)
+        {
+          id_f.push_back (id_e[t]);
+        }
+        ids = id_f;
+      }
+    
+    }
+    mztab.setPSMSectionRows(mztabRows);  
+  }    
   
   return rows.size()!=0 ? 1:0;
 }

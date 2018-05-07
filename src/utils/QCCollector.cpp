@@ -59,7 +59,7 @@ protected:
     StringList ins_FeatureLinkerUnlabeledQT = getStringList_("in_FeatureLinkerUnlabeledQT");
     String out = getStringOption_("out");
     vector<pair<String,FeatureMap>> fvec;
-    vector<pair<String,FeatureMap>> mbravec;
+    vector<FeatureMap> mbravec;
     vector<pair<String,CsvFile>> cvec;
     vector <pair<String,ConsensusMap>> CMapVec;
     vector<pair<String,pair<String,String>>> ivec;
@@ -79,7 +79,7 @@ protected:
 			  FeatureMap features;
 			  FeatureXMLFile().load(*it, features);
         mrawfiles.push_back(features.getMetaValue("spectra_data"));
-        mbravec.push_back(make_pair("MapRTTransformer",features));
+        mbravec.push_back(features);
 	    }
     }
 		else if (ins_IDMapper.size()!=0)

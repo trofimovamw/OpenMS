@@ -40,10 +40,10 @@
 
 class OPENMS_DLLAPI QCMBRalignment
 {
-std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> feat_map_;
+std::vector<OpenMS::FeatureMap> maps;
   public:
     //Constructor
-    QCMBRalignment(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files);
+    QCMBRalignment(std::vector<OpenMS::FeatureMap> files);
     //Destructor
     ~QCMBRalignment();
     

@@ -38,16 +38,20 @@
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <vector>
 
-class OPENMS_DLLAPI QCChargeDistribution
+namespace OpenMS
 {
-std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> feat_map_;
-  public:
-    //Constructor
-    QCChargeDistribution(std::vector<std::pair<OpenMS::String,OpenMS::FeatureMap>> files);
-    //Destructor
-    ~QCChargeDistribution();
+
+  class OPENMS_DLLAPI QCChargeDistribution
+  {
+  std::vector<OpenMS::FeatureMap> maps;
+    public:
+      //Constructor
+      QCChargeDistribution(std::vector<OpenMS::FeatureMap> files);
+      //Destructor
+      ~QCChargeDistribution();
     
-    int ChargeDistribution(OpenMS::MzTab&) const;
+      int ChargeDistribution(OpenMS::MzTab&) const;
   
-};
+  };
+}
 

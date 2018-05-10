@@ -133,7 +133,7 @@ int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
     vector<MzTabOptionalColumnEntry> opt = it->opt_;
     for (vector<MzTabOptionalColumnEntry>::const_iterator o_it = opt.begin();o_it!=opt.end();++o_it)
     {
-      if(o_it->first=="unique_id")
+      if(o_it->first=="opt_unique_id")
         {
           ids_.push_back(o_it->second);
         }

@@ -83,7 +83,6 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
 
       vector<PeptideIdentification> pep_id = f_it->getPeptideIdentifications();
       UInt64 unique_id = f_it->getUniqueId();
-      cout << unique_id << endl;	
  		  
       if (pep_id.empty()) 
       {
@@ -135,16 +134,16 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
     	      	  
     	  //Set optional columns: original RT and source file
     	  String ori = to_string(orRT);
-          MzTabOptionalColumnEntry oRT = make_pair("original_retention_time",MzTabString(ori));
+          MzTabOptionalColumnEntry oRT = make_pair("opt_original_retention_time",MzTabString(ori));
           vector<MzTabOptionalColumnEntry> v;
           v.push_back (oRT);
           
           UInt64 id = f_it->getUniqueId();
-          MzTabOptionalColumnEntry u_id = make_pair("unique_id",MzTabString(id));
+          MzTabOptionalColumnEntry u_id = make_pair("opt_unique_id",MzTabString(id));
           v.push_back (u_id);
           unique_ids_.push_back (MzTabString(id));
                 
-          MzTabOptionalColumnEntry sraw = make_pair("raw_source_file",MzTabString(rfile));
+          MzTabOptionalColumnEntry sraw = make_pair("opt_raw_source_file",MzTabString(rfile));
           v.push_back (sraw);
           row.opt_ = v;
                 
@@ -163,14 +162,13 @@ int QCMBRalignment::MBRAlignment(MzTab& mztab) const
     vector<MzTabOptionalColumnEntry> opt = it->opt_;
     for (vector<MzTabOptionalColumnEntry>::const_iterator o_it = opt.begin();o_it!=opt.end();++o_it)
     {
-      if(o_it->first=="unique_id")
+      if(o_it->first=="opt_unique_id")
         {
           ids_.push_back(o_it->second);
         }
     }
   }
-  cout<< ids_.size() << endl;
-  cout << unique_ids_.size() << endl; 
+  
   //Merge new lines and existing lines. Based on unique ids (UniqueIdInterface)
   //If PSM section was not written before: append rows
   

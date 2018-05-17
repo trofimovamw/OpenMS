@@ -82,7 +82,7 @@ int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
       if (pep_id.empty()) 
       {
         //Empty lines of psm_data_ for features with ion charge	
-        MzTabPSMSectionRow row;
+        /*MzTabPSMSectionRow row;
         MzTabInteger charge;
         int ch = f_it->getCharge();
         charge.set(ch);
@@ -90,7 +90,7 @@ int QCChargeDistribution::ChargeDistribution(MzTab& mztab) const
         rows.push_back (row);
         UInt64 id = f_it->getUniqueId();
         unique_ids_.push_back (MzTabString(id));
-        featCount++;
+        featCount++;*/
         
       }
  				

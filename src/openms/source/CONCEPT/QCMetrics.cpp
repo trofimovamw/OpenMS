@@ -34,13 +34,13 @@ int papc = ProtAndPepObj.ProtAndPepCount( mzTabOutput);
 //QCMS2IdentificationRate MS2IDRate(Idxml_);
 //int mid = MS2IDRate.MS2IDRateidentifier_( mzTabOutput);
 
+
 QCMBRalignment MBRAlign(FeatMapsMBR_);
 int mbra = MBRAlign.MBRAlignment( mzTabOutput);
 
 QCChargeDistribution QCCharge(FeatMapsMBR_);
 int cd = QCCharge.ChargeDistribution( mzTabOutput);
 mzTabOutputFile.store(out_,mzTabOutput);
-
 }
 
 ////////////////Metrik2: ....................../////////////////////////////////////

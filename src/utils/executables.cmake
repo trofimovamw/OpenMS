@@ -22,6 +22,8 @@ IDSplitter
 LabeledEval
 LowMemPeakPickerHiRes
 LowMemPeakPickerHiResRandomAccess
+MapAlignerTreeBased
+TestAlignments
 MassCalculator
 MetaboliteAdductDecharger
 MetaboliteSpectralMatcher

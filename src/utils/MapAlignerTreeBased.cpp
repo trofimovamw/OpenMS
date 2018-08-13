@@ -100,7 +100,7 @@ private:
     
     computeMetric(M,maps);   
     vector<pair<pair<int,int>,float>> queue;
-    computeSpanningTree(M,queue,maps,out); 
+    computeSpanningTree(M,queue); 
     alignSpanningTree(queue,maps,fmaps,input_files,out);   
     ConsensusXMLFile().store(output_file, out); 
 
@@ -210,6 +210,7 @@ private:
         double pearson = Math::pearsonCorrelationCoefficient(map1.begin(), map1.end(), map2.begin(), map2.end());
         //Math::computeRank(map1);
         //Math::computeRank(map2);
+        cout << "Pearson: " << pearson << endl;
         //double rpearson = Math::rankCorrelationCoefficient(map1.begin(), map1.end(), map2.begin(), map2.end());
         if (!isnan(pearson))
         {
@@ -239,7 +240,7 @@ unsigned int closestMatch(float point, AASequence seq, vector<float> rts,
                           vector<AASequence> sequences) const
 {
   double min = DBL_MAX;
-  unsigned int index;
+  unsigned int index = 0;
   for (unsigned int  i = 0; i < rts.size(); i++)
   {
     if (seq==sequences[i])
@@ -254,8 +255,7 @@ unsigned int closestMatch(float point, AASequence seq, vector<float> rts,
 
 //================================MST===============================//
 void computeSpanningTree(vector<vector<double>> matrix, 
-                         vector<pair<pair<int,int>,float>>& queue, vector<ConsensusMap>& maps, 
-                         ConsensusMap& out)
+                         vector<pair<pair<int,int>,float>>& queue)
                          
 { 
   vector<pair<pair<int,int>,float>> sortedEdges;
@@ -283,10 +283,6 @@ void computeSpanningTree(vector<vector<double>> matrix,
     tree.addEdge(sortedEdges[0].first.first,sortedEdges[0].first.second);
     if (tree.containsCycle()) {}
     else  {queue.push_back(sortedEdges[0]);}
-    for (unsigned int j = 0; j < queue.size(); j++)
-    {
-      cout << queue[j].first.first << ", " << queue[j].first.second << endl; 
-    }
     sortedEdges.erase(sortedEdges.begin());
   }
   
@@ -354,7 +350,7 @@ void alignSpanningTree(vector<pair<pair<int,int>,float>>& queue, vector<Consensu
     to_align.push_back(maps[B]);
     
     vector<TransformationDescription> transformations;
-    for (unsigned int i = 0; i < to_align.size(); i++)
+    for (unsigned int j = 0; j < to_align.size(); j++)
     {
       TransformationDescription t;
       transformations.push_back(t); 

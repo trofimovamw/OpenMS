@@ -7,22 +7,27 @@ using namespace OpenMS;
 using namespace std;
 
 class SpanningGraph
-{
-    int V;   
-    vector<int> *adj;
-    bool isCyclic(int v, bool visited[], int source);    
+{  
     
 public:
+    int V;   
+    vector<vector<int>> adj; 
     SpanningGraph(int V);   
     void addEdge(int v, int w);   
     bool containsCycle();  
-    
+    bool DFS(int v, vector<bool>& visited, int source); 
 };
  
 SpanningGraph::SpanningGraph(int V)
 {
     this->V = V;
-    adj = new vector<int>[V];
+    vector<vector<int>> adj;
+    for (Size i = 0; i < V; i++)
+    {
+      vector<int> a;
+      adj.push_back(a);
+    }
+    this->adj = adj;
 }
  
 void SpanningGraph::addEdge(int v, int w)
@@ -33,7 +38,7 @@ void SpanningGraph::addEdge(int v, int w)
 
 bool SpanningGraph::containsCycle()
 {
-  bool *visited = new bool[V];
+  vector<bool> visited(V);
   for (int i = 0; i < V; i++)
   {
     visited[i] = false;
@@ -43,7 +48,7 @@ bool SpanningGraph::containsCycle()
   {
     if (!visited[u])
     {
-      if (isCyclic(u, visited, -1))
+      if (DFS(u, visited, -1))
       {
         return true;
       }
@@ -53,17 +58,17 @@ bool SpanningGraph::containsCycle()
 
 }
 
-bool SpanningGraph::isCyclic(int v, bool visited[], int source)
+//DFS helper
+bool SpanningGraph::DFS(int v, vector<bool>& visited, int source)
 {
     visited[v] = true;
-    vector<int>::iterator i;
-    for (i = adj[v].begin(); i != adj[v].end(); ++i)
+    for (vector<int>::iterator it = adj[v].begin(); it != adj[v].end(); ++it)
     {
-      if (!visited[*i])
+      if (!visited[*it])
       {
-        if (isCyclic(*i, visited, v)) {return true;}
+        if (DFS(*it, visited, v)) {return true;}
       }
-      else if (*i != source) {return true;}
+      else if (*it != source) {return true;}
     }
     return false;
 }

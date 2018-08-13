@@ -213,8 +213,8 @@ private:
         //double rpearson = Math::rankCorrelationCoefficient(map1.begin(), map1.end(), map2.begin(), map2.end());
         if (!isnan(pearson))
         {
-          matrix[i][j] = 1-pearson; 
-          matrix[j][i] = 1-pearson;
+          matrix[i][j] = 1-abs(pearson); 
+          matrix[j][i] = 1-abs(pearson);
         }
         else
         {
@@ -410,18 +410,6 @@ void alignSpanningTree(vector<pair<pair<int,int>,float>>& queue, vector<Consensu
      
     maps[A] = out;
     maps[B] = out;
-    
-    String name1 = "/Users/maria/Desktop/out/alignment_to_plot";
-    String n = to_string(A);
-    //String m = to_string(B);
-    String file1 = name1 + n + ".consensusXML";
-    ConsensusXMLFile().store(file1,to_align[0]);
-    
-    String name2 = "/Users/maria/Desktop/out/alignment_to_plot";
-    //String n = to_string(A);
-    String m = to_string(B);
-    String file2 = name2 + m + ".consensusXML";
-    ConsensusXMLFile().store(file2,to_align[1]);
     
     //input_files[A] = file;
     

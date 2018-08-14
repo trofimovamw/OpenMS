@@ -34,13 +34,13 @@ private:
 	{
 	  String file_formats = "featureXML,consensusXML";
 	  registerInputFileList_("in", "<files>", StringList(), "Input files to align (all must have the same file type)", true);
-      setValidFormats_("in", ListUtils::create<String>(file_formats));
-      registerOutputFile_("out", "<file>", "", "Output file.", false);
-      setValidFormats_("out", ListUtils::create<String>(file_formats));
-      registerSubsection_("algorithm", "Algorithm parameters section");
-      registerSubsection_("model", "Options to control the modeling of retention time transformations from data");
-      registerFlag_("keep_subelements", "For consensusXML input only: If set, the sub-features of the inputs are transferred to the output.");
-    } 
+         setValidFormats_("in", ListUtils::create<String>(file_formats));
+         registerOutputFile_("out", "<file>", "", "Output file.", false);
+         setValidFormats_("out", ListUtils::create<String>(file_formats));
+         registerSubsection_("algorithm", "Algorithm parameters section");
+         registerSubsection_("model", "Options to control the modeling of retention time transformations from data");
+         registerFlag_("keep_subelements", "For consensusXML input only: If set, the sub-features of the inputs are transferred to the output.");
+      } 
   
   ExitCodes main_(int, const char**)
   {
@@ -51,24 +51,24 @@ private:
     FileTypes::Type in_type = FileHandler::getType(input_files[0]); 
     
     if (in_type == FileTypes::FEATUREXML)
-	{
+    {
 	  for(unsigned int  i = 0; i < input_files.size(); i++)
 	  {
 	    FeatureMap f;
 	    ConsensusMap c;
-        FeatureXMLFile().load(input_files[i],f);
-        fmaps.push_back(f);
+           FeatureXMLFile().load(input_files[i],f);
+           //fmaps.push_back(f);
 	    MapConversion::convert(0, f, c, -1);
 	    c.getFileDescriptions()[0].filename = input_files[i]; //get filenames
-        c.applyMemberFunction(&UniqueIdInterface::setUniqueId);
-        c.getFileDescriptions()[0].size = c.size(); 
+           c.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+           c.getFileDescriptions()[0].size = c.size(); 
 	    maps.push_back(c);   
 	  }
     }
     
     else if (in_type == FileTypes::CONSENSUSXML)
-	{
-	  int index = 0;
+    {
+      int index = 0;
       for(StringList::const_iterator it = input_files.begin(); it!=input_files.end(); ++it)
       {
         ConsensusMap c;
@@ -101,7 +101,7 @@ private:
     computeMetric(M,maps);   
     vector<pair<pair<int,int>,float>> queue;
     computeSpanningTree(M,queue); 
-    alignSpanningTree(queue,maps,fmaps,input_files,out);   
+    alignSpanningTree(queue,maps,input_files,out);   
     ConsensusXMLFile().store(output_file, out); 
 
     return EXECUTION_OK;
@@ -195,7 +195,6 @@ private:
         {
           if ((features[i][ii] == features[j][jj]) && (match==jj) && (charge[i][ii]==charge[j][jj]))
           { 
-           
             map1.push_back(RTs[i][ii]);
             map2.push_back(RTs[j][jj]);
           }
@@ -204,29 +203,32 @@ private:
         
       }
      
-      if (map1.size()>0)
+      if (map1.size()>2)
       {
         
         double pearson = Math::pearsonCorrelationCoefficient(map1.begin(), map1.end(), map2.begin(), map2.end());
+        LOG_INFO << "Found " << map1.size() << " matching peptides for…" << i << " and " << j << endl;
         //Math::computeRank(map1);
-        //Math::computeRank(map2);
-        cout << "Pearson: " << pearson << endl;
+        //Math::computeRank(map2);        
         //double rpearson = Math::rankCorrelationCoefficient(map1.begin(), map1.end(), map2.begin(), map2.end());
         if (!isnan(pearson))
         {
           matrix[i][j] = 1-abs(pearson); 
           matrix[j][i] = 1-abs(pearson);
+          LOG_INFO << matrix[i][j] << endl;
         }
         else
         {
           matrix[i][j] = 1;
           matrix[j][i] = 1;
+          LOG_INFO << matrix[i][j] << endl;
         }
       }
       else 
       {
         matrix[i][j] = 2; //no correlation
         matrix[j][i] = 2; 
+        LOG_INFO << matrix[i][j] << endl;
       } 
     } 
   }
@@ -253,7 +255,7 @@ unsigned int closestMatch(float point, AASequence seq, vector<float> rts,
   return index;
 }
 
-//================================MST===============================//
+
 void computeSpanningTree(vector<vector<double>> matrix, 
                          vector<pair<pair<int,int>,float>>& queue)
                          
@@ -300,7 +302,7 @@ void computeSpanningTree(vector<vector<double>> matrix,
 static bool sortByScore(const pair<pair<int,int>,float> &lhs, const pair<pair<int,int>,float> &rhs) { return lhs.second < rhs.second; }
 
 
-void align(vector<ConsensusMap>& to_align, int A, vector<TransformationDescription>& transformations)
+void align(vector<ConsensusMap>& to_align, vector<TransformationDescription>& transformations)
 {
   
   MapAlignmentAlgorithmIdentification algorithm;
@@ -331,16 +333,9 @@ void align(vector<ConsensusMap>& to_align, int A, vector<TransformationDescripti
 
 
 void alignSpanningTree(vector<pair<pair<int,int>,float>>& queue, vector<ConsensusMap>& maps,
-                       vector<FeatureMap>& tmaps, StringList input_files, ConsensusMap& out_map)
+                       StringList input_files, ConsensusMap& out_map)
 {  
-  int counter = 0;
-  vector<vector<int>> ind;
-  for (unsigned int tm = 0; tm < tmaps.size(); tm++)
-  {
-    vector<int> m;
-    m.push_back(tm);
-    ind.push_back(m);
-  }
+ 
   for (unsigned int i = 0; i < queue.size(); i++)
   {
     vector<ConsensusMap> to_align;
@@ -355,8 +350,7 @@ void alignSpanningTree(vector<pair<pair<int,int>,float>>& queue, vector<Consensu
       TransformationDescription t;
       transformations.push_back(t); 
     }
-    align(to_align,counter,transformations);
-    counter++; 
+    align(to_align,transformations);
   
     //Grouping step
   
@@ -429,14 +423,7 @@ void alignSpanningTree(vector<pair<pair<int,int>,float>>& queue, vector<Consensu
     out_map = out;
     out.clear();
   }
-  //for (unsigned int t = 0; t < tmaps.size(); t++)
-  //{
-  //  String name = "/Users/maria/Desktop/out/bottom_fmap";
-  //  String n = to_string(t);
-  //  String file = name + n + ".featureXML";
-  //  FeatureXMLFile().store(file, tmaps[t]);
-  //}
- 
+
 } 
 
 };

@@ -224,7 +224,7 @@ private:
           LOG_INFO << matrix[i][j] << endl;
         }
       }
-      else if (map1.size()<=2) 
+      else 
       {
         matrix[i][j] = 2; //no correlation
         matrix[j][i] = 2; 

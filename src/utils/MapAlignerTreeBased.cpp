@@ -101,7 +101,8 @@ private:
     computeMetric(M,maps);   
     vector<pair<pair<int,int>,float>> queue;
     computeSpanningTree(M,queue); 
-    alignSpanningTree(queue,maps,input_files,out);   
+    alignSpanningTree(queue,maps,input_files,out); 
+    
     ConsensusXMLFile().store(output_file, out); 
 
     return EXECUTION_OK;
@@ -127,30 +128,22 @@ private:
   
   
 
-  /*
-  *
-  * Compute metric
-  *
-  */
+  //Fill in matrix
   void computeMetric(vector<vector<double>>& matrix, vector<ConsensusMap>& maps) const
   { 
   
-  vector<vector<AASequence>> features;
-  vector<vector<float>> RTs;
-  vector<vector<int>> charge;
+  vector<map<pair<AASequence,int>,DoubleList>> all_seq;
   
   for (Size m = 0; m < maps.size(); m++) 
   {
-    vector<AASequence> f;
-    vector<float> rt;
-    vector<int> ch;
-    
+  
+    map<pair<AASequence,int>,DoubleList> seq_rts;
     vector<PeptideIdentification> un_pep = maps[m].getUnassignedPeptideIdentifications();
     for (vector<PeptideIdentification>::iterator pep_it = un_pep.begin(); pep_it!=un_pep.end();pep_it++)
     {
-      f.push_back(pep_it->getHits()[0].getSequence());
-      rt.push_back(pep_it->getRT());
-      ch.push_back(pep_it->getHits()[0].getCharge());
+    
+      pair<AASequence,int> seq_ch = make_pair(pep_it->getHits()[0].getSequence(),pep_it->getHits()[0].getCharge());
+      seq_rts[seq_ch].push_back(pep_it->getRT());
     }
     
     for (vector<ConsensusFeature>::iterator c_it = maps[m].begin(); c_it!=maps[m].end();c_it++) 
@@ -167,47 +160,41 @@ private:
             {
               //Writes peptide hit with the highest score
               p_it->sort();
-              f.push_back(p_it->getHits()[0].getSequence());
-              ch.push_back(c_it->getCharge());
-              rt.push_back(p_it->getRT());
+              pair<AASequence,int> seq_ch = make_pair(p_it->getHits()[0].getSequence(),p_it->getHits()[0].getCharge());
+              seq_rts[seq_ch].push_back(p_it->getRT());
+              
             }
           }
        }
     }
-    features.push_back(f);
-    RTs.push_back(rt);
-    charge.push_back(ch);
+    all_seq.push_back(seq_rts);
+  
   }
   
-  for (unsigned int i = 0; i < RTs.size()-1; i++)
-  { 
-    for (unsigned int j = i+1; j < RTs.size(); j++)
+  for(unsigned int i = 0; i < all_seq.size()-1; i++)
+  {
+    for(unsigned int j = i; j < all_seq.size(); j++) 
     {
       vector<float> map1;
       vector<float> map2;
       
-      for (unsigned int ii = 0; ii < RTs[i].size(); ii++)
+      for (map<pair<AASequence,int>,DoubleList>::iterator a_it = all_seq[i].begin(); a_it != all_seq[i].end(); ++a_it)
       {
-        
-        unsigned int match = closestMatch(RTs[i][ii], features[i][ii], RTs[j], features[j]);
-
-        for (unsigned int jj = 0; jj < RTs[j].size(); jj++)
+        for (map<pair<AASequence,int>,DoubleList>::iterator b_it = all_seq[j].begin(); b_it != all_seq[j].end(); ++b_it)
         {
-          if ((features[i][ii] == features[j][jj]) && (match==jj) && (charge[i][ii]==charge[j][jj]))
-          { 
-            map1.push_back(RTs[i][ii]);
-            map2.push_back(RTs[j][jj]);
+          if(a_it->first==b_it->first)
+          {
+            pair<double,double> min = closestMatch(a_it->second,b_it->second);
+            map1.push_back(min.first);
+            map2.push_back(min.second);
           }
-          
         }
-        
       }
-     
       if (map1.size()>2)
       {
         
         double pearson = Math::pearsonCorrelationCoefficient(map1.begin(), map1.end(), map2.begin(), map2.end());
-        LOG_INFO << "Found " << map1.size() << " matching peptides for…" << i << " and " << j << endl;
+        LOG_INFO << "Found " << map1.size() << " matching peptides for " << i << " and " << j << endl;
         //Math::computeRank(map1);
         //Math::computeRank(map2);        
         //double rpearson = Math::rankCorrelationCoefficient(map1.begin(), map1.end(), map2.begin(), map2.end());
@@ -230,32 +217,34 @@ private:
         matrix[j][i] = 2; 
         LOG_INFO << matrix[i][j] << endl;
       } 
-    } 
-  }
-  RTs.clear();
-  features.clear();
-  charge.clear();
-    
-}
-
-unsigned int closestMatch(float point, AASequence seq, vector<float> rts, 
-                          vector<AASequence> sequences) const
-{
-  double min = DBL_MAX;
-  unsigned int index = 0;
-  for (unsigned int  i = 0; i < rts.size(); i++)
-  {
-    if (seq==sequences[i])
-    {
-      double diff = abs(rts[i]-point);
-      if ((diff<min)==true) {index = i;}
     }
   }
   
-  return index;
+  
 }
 
 
+//find closest match of same peptides in maps
+pair<double,double> closestMatch(DoubleList a, DoubleList b) const
+{ 
+  double RT1 = DBL_MAX;
+  double RT2 = DBL_MAX;
+  double min_dist = DBL_MAX;
+  for (DoubleList::iterator a_it = a.begin(); a_it != a.end(); ++a_it )
+  {
+    for(DoubleList::iterator b_it = b.begin(); b_it != b.end(); ++b_it)
+    {
+      double dist = abs(*a_it - *b_it);
+      if(dist<min_dist) {RT1 = *a_it; RT2 = *b_it;}
+    }
+  
+  }
+  return make_pair(RT1,RT2);
+
+}
+
+
+//compute MST for the tree-based alignment
 void computeSpanningTree(vector<vector<double>> matrix, 
                          vector<pair<pair<int,int>,float>>& queue)
                          
@@ -299,9 +288,10 @@ void computeSpanningTree(vector<vector<double>> matrix,
  
 }
 
+//sorting function for queue
 static bool sortByScore(const pair<pair<int,int>,float> &lhs, const pair<pair<int,int>,float> &rhs) { return lhs.second < rhs.second; }
 
-
+//alignment util
 void align(vector<ConsensusMap>& to_align, vector<TransformationDescription>& transformations)
 {
   
@@ -331,7 +321,7 @@ void align(vector<ConsensusMap>& to_align, vector<TransformationDescription>& tr
  
 }
 
-
+//Main alignment function
 void alignSpanningTree(vector<pair<pair<int,int>,float>>& queue, vector<ConsensusMap>& maps,
                        StringList input_files, ConsensusMap& out_map)
 {  
@@ -378,13 +368,10 @@ void alignSpanningTree(vector<pair<pair<int,int>,float>>& queue, vector<Consensu
     
     grouping.transferSubelements(to_align,out);
   
-    //grouping.transferSubelements(to_group, out);
     out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
-    // annotate output with data processing info  
     addDataProcessing_(out,getProcessingInfo_(DataProcessing::FEATURE_GROUPING));
 
-    // sort list of peptide identifications by map index
     out.sortPeptideIdentificationsByMapIndex();
   
     
@@ -400,9 +387,7 @@ void alignSpanningTree(vector<pair<pair<int,int>,float>>& queue, vector<Consensu
      
     maps[A] = out;
     maps[B] = out;
-    
-    //input_files[A] = file;
-    
+        
     map<Size, UInt> num_consfeat_of_size;
     for (ConsensusMap::const_iterator cmit = out.begin();
          cmit !=out.end(); ++cmit)

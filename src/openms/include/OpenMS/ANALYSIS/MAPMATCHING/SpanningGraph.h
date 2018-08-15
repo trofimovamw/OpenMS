@@ -44,11 +44,11 @@ bool SpanningGraph::containsCycle()
     visited[i] = false;
   }
     
-  for (int u = 0; u < V; u++)
+  for (int v = 0; v < V; v++)
   {
-    if (!visited[u])
+    if (!visited[v])
     {
-      if (DFS(u, visited, -1))
+      if (DFS(v, visited, -1))
       {
         return true;
       }
@@ -62,13 +62,13 @@ bool SpanningGraph::containsCycle()
 bool SpanningGraph::DFS(int v, vector<bool>& visited, int source)
 {
     visited[v] = true;
-    for (vector<int>::iterator it = adj[v].begin(); it != adj[v].end(); ++it)
+    for (unsigned int i = 0; i < adj[v].size(); i++)
     {
-      if (!visited[*it])
+      if (!visited[adj[v][i]])
       {
-        if (DFS(*it, visited, v)) {return true;}
+        if (DFS(adj[v][i], visited, v)) {return true;}
       }
-      else if (*it != source) {return true;}
+      else if (adj[v][i] != source) {return true;}
     }
     return false;
 }

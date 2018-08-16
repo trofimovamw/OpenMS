@@ -15,7 +15,7 @@ public:
     SpanningGraph(int V);   
     void addEdge(int v, int w);   
     bool containsCycle();  
-    bool DFS(int v, vector<bool>& visited, int source); 
+    bool DFS(int v, int source, vector<bool>& visited); 
 };
  
 SpanningGraph::SpanningGraph(int V)
@@ -59,7 +59,7 @@ bool SpanningGraph::containsCycle()
 }
 
 //DFS helper
-bool SpanningGraph::DFS(int v, vector<bool>& visited, int source)
+bool SpanningGraph::DFS(int v, int source, vector<bool>& visited)
 {
     visited[v] = true;
     for (unsigned int i = 0; i < adj[v].size(); i++)
